@@ -49,3 +49,5 @@ Yet another malloc working on distributed systems. (Big Malloc)
 | snap                              | give user a snap of the network (print)                 |
 | snap `file`                       | same as snap but stored in file                         |
 | dnet                              | write a .dot file of the network                        |
+| kill `id`                         | kill node refered by `id`                               |
+| revive `id`                       | rivive `id`                                             |
