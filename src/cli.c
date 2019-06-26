@@ -137,6 +137,122 @@ void execute(char **args) {
             if (1 == sscanf(args[2], "%zu", &datasize)) {
                 printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
             } else {
+                error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
+            }
+        } else {
+            error_msg("w requires an argument 'address' which can be casted as a positive integer");
+        }
+    } else if (0 == strcmp(args[0], "r")) {
+        // ERRORS
+        if (l <= 2) {
+            error_msg("r requires 2 arguments : 'address' and 'datasize'");
+            return;
+        } else if (l >= 4) {
+            error_msg("r do not support more than 2 arguments, check command h");
+            return;
+        }
+
+        // Execution
+        size_t address = 0;
+        size_t datasize = 0;
+        if (1 == sscanf(args[1], "%zu", &address)) {
+            if (1 == sscanf(args[2], "%zu", &datasize)) {
+                printf("Execute Read at %zu, %zu bytes\n", address, datasize);
+            } else {
+                error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
+            }
+        } else {
+            error_msg("r require an argument 'address' which can be casted as a positive integer");
+        }
+    } else if (0 == strcmp(args[0], "d")) {
+        // ERRORS
+        if (l <= 1) {
+            error_msg("d requires minimum 1 argument and maximum 2 : 'address' and 'file'");
+            return;
+        } else if (l >= 4) {
+            error_msg("d do not support more than 2 arguments, check command h");
+            return;
+        }
+
+        // Execution
+        size_t address = 0;
+        if (1 == sscanf(args[1], "%zu", &address)) {
+
+            // d address
+            if (l == 2) {
+                printf("Execute Dump of %zu\n", address);
+
+            }
+
+            // d address file
+            if (l == 3) {
+                printf("Execute Dump of %zu  and stored it in %s\n", address, args[2]);
+            }
+
+        } else {
+            error_msg("w require an argument 'address' which can be casted as a positive integer");
+        }
+    } else if (0 == strcmp(args[0], "snap")) {
+        // ERRORS
+        if (l <= 3) {
+            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
+            return;
+        } else if (l >= 5) {
+            error_msg("w do not support more than 3 arguments, check command h");
+            return;
+        }
+
+        // Execution
+        size_t address = 0;
+        size_t datasize = 0;
+        if (1 == sscanf(args[1], "%zu", &address)) {
+            if (1 == sscanf(args[2], "%zu", &datasize)) {
+                printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
+            } else {
+                error_msg("w require an argument 'datasize' which can be casted as a positive integer");
+            }
+        } else {
+            error_msg("w require an argument 'address' which can be casted as a positive integer");
+        }
+    } else if (0 == strcmp(args[0], "w")) {
+        // ERRORS
+        if (l <= 3) {
+            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
+            return;
+        } else if (l >= 5) {
+            error_msg("w do not support more than 3 arguments, check command h");
+            return;
+        }
+
+        // Execution
+        size_t address = 0;
+        size_t datasize = 0;
+        if (1 == sscanf(args[1], "%zu", &address)) {
+            if (1 == sscanf(args[2], "%zu", &datasize)) {
+                printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
+            } else {
+                error_msg("w require an argument 'datasize' which can be casted as a positive integer");
+            }
+        } else {
+            error_msg("w require an argument 'address' which can be casted as a positive integer");
+        }
+    } else if (0 == strcmp(args[0], "w")) {
+        // ERRORS
+        if (l <= 3) {
+            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
+            return;
+        } else if (l >= 5) {
+            error_msg("w do not support more than 3 arguments, check command h");
+            return;
+        }
+
+        // Execution
+        size_t address = 0;
+        size_t datasize = 0;
+        if (1 == sscanf(args[1], "%zu", &address)) {
+            if (1 == sscanf(args[2], "%zu", &datasize)) {
+                printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
+            } else {
                 error_msg("w require an argument 'datasize' which can be casted as a positive integer");
             }
         } else {
