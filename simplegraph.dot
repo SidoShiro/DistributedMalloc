@@ -1,0 +1,10 @@
+graph myGraph{
+    a -- b;
+    b -- c;
+    c -- d;
+    d -- e;
+    e -- f;
+    a -- d;
+    b -- d;
+    c -- f;
+}

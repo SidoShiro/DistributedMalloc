@@ -2,6 +2,15 @@
 
 Yet another malloc working on distributed systems. (Big Malloc)
 
+# Tooltips
+
+* How to display a graph
+
+    ```bash
+    sudo apt install xdot
+    xdot GRAPH_NAME.dot
+    ```
+
 # Todo
 
 * command line
@@ -51,3 +60,5 @@ Yet another malloc working on distributed systems. (Big Malloc)
 | dnet                              | write a .dot file of the network                        |
 | kill `id`                         | kill node refered by `id`                               |
 | revive `id`                       | revive `id`                                             |
+
+
