@@ -2,6 +2,33 @@
 
 Yet another malloc working on distributed systems. (Big Malloc)
 
+# Usage
+
+In a build directory:
+
+```sh
+mkdir build
+cd build
+cmake ..
+make
+./dmalloc [DOTFILE]
+```
+
+In project directory:
+
+```sh
+cmake .
+make
+./dmalloc [DOTFILE]
+```
+
+
+dmalloc usage :
+
+```sh
+./dmalloc [DOTFILE]
+```
+
 # Tooltips
 
 * How to display a graph
