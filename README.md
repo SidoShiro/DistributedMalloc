@@ -37,14 +37,14 @@ Yet another malloc working on distributed systems. (Big Malloc)
     
 ## Command Line
 
-| Command                           | Desc.                                                   |
+| **Command**                       | **Desc.**                                               |
 |-----------------------------------|---------------------------------------------------------|
-| m size                            | return `address` to cmd user of the required allocation |
-| f address                         | free address, Warning if already free                   |
-| w address datasize data           | write at the address the data of size datasize          |
-| r address datasize                | read datasize bytes at address                          |
-| d address                         | dump in as text all data of the block stored in address |
-| d address file                    | dump address data in file                               |
+| m `size`                          | return `address` to cmd user of the required allocation |
+| f `address`                       | free address, Warning if already free                   |
+| w `address` `datasize` `data`     | write at the address the data of size datasize          |
+| r `address` `datasize`            | read datasize bytes at address                          |
+| d `address`                       | dump in as text all data of the block stored in address |
+| d `address` `file`                | dump address data in file                               |
 | snap                              | give user a snap of the network (print)                 |
-| snap file                         | same as snap but stored in file                         |
+| snap `file`                       | same as snap but stored in file                         |
 | dnet                              | write a .dot file of the network                        |
