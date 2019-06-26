@@ -1,4 +1,7 @@
-//
-// Created by sido on 26/06/19.
-//
+#include <stdio.h>
+#include "../include/utils.h"
 
+int main() {
+    printf("%d\n", fun());
+    return 0;
+}
