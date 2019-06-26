@@ -39,6 +39,7 @@ Yet another malloc working on distributed systems. (Big Malloc)
 
 | **Command**                       | **Desc.**                                               |
 |-----------------------------------|---------------------------------------------------------|
+| h                                 | display all available commands with their description   |
 | m `size`                          | return `address` to cmd user of the required allocation |
 | f `address`                       | free address, Warning if already free                   |
 | w `address` `datasize` `data`     | write at the address the data of size datasize          |
