@@ -50,4 +50,4 @@ Yet another malloc working on distributed systems. (Big Malloc)
 | snap `file`                       | same as snap but stored in file                         |
 | dnet                              | write a .dot file of the network                        |
 | kill `id`                         | kill node refered by `id`                               |
-| revive `id`                       | rivive `id`                                             |
+| revive `id`                       | revive `id`                                             |
