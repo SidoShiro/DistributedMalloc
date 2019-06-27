@@ -1,4 +1,4 @@
-#include "../include/utils.h"
+#include "utils.h"
 
 int fun() {
     struct a as;

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../include/cli.h"
+#include "cli.h"
 
 char *read_cmd() {
     ssize_t buffer_size = 256;
