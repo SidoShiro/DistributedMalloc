@@ -11,7 +11,7 @@ mkdir build
 cd build
 cmake ..
 make
-./dmalloc [DOTFILE]
+mpirun --hostfile ../hostfile dmalloc [DOTFILE]
 ```
 
 In project directory:
@@ -19,15 +19,9 @@ In project directory:
 ```sh
 cmake .
 make
-./dmalloc [DOTFILE]
+mpirun --hostfile hostfile dmalloc [DOTFILE]
 ```
 
-
-dmalloc usage :
-
-```sh
-./dmalloc [DOTFILE]
-```
 
 # Tooltips
 
