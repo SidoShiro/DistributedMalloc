@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <err.h>
 
-#include "../include/utils.h"
+#include "utils.h"
 
 void start_cli();
 

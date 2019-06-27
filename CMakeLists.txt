@@ -8,7 +8,7 @@ project(DistributedMalloc)
 find_package(MPI REQUIRED)
 
 # Vars with files for compilation
-set(SRCS src/main.c src/utils.c src/cli.c)
+set(SRCS src/main/main.c src/utils/utils.c src/cli/cli.c)
 include_directories("include/")
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
