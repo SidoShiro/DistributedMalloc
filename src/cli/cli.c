@@ -269,7 +269,7 @@ void start_cli() {
 
     while (no_quit) {
         printf("dmalloc $ ");
-
+        fflush(0);
         cmd = read_cmd();
 
         // DEBUG printf("%s\n", cmd);
