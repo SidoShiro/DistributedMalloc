@@ -72,19 +72,19 @@ void execute(char **args) {
     if (l == 0)
         return;
     if (0 == strcmp(args[0], "h")) {
-        printf("dmalloc commands:"
-               " h                                 | display all available commands with their description   |\n"
-               " m `size`                          | return `address` to cmd user of the required allocation |\n"
-               " f `address`                       | free address, Warning if already free                   |\n"
-               " w `address` `datasize` `data`     | write at the address the data of size datasize          |\n"
-               " r `address` `datasize`            | read datasize bytes at address                          |\n"
-               " d `address`                       | dump in as text all data of the block stored in address |\n"
-               " d `address` `file`                | dump address data in file                               |\n"
-               " snap                              | give user a snap of the network (print)                 |\n"
-               " snap `file`                       | same as snap but stored in file                         |\n"
-               " dnet                              | write a .dot file of the network                        |\n"
-               " kill `id`                         | kill node refered by `id`                               |\n"
-               " revive `id`                       | revive `id`                                             |\n"
+        printf("dmalloc commands:\n"
+               " h                             | display all available commands with their description   |\n"
+               " m `size`                      | return `address` to cmd user of the required allocation |\n"
+               " f `address`                   | free address, Warning if already free                   |\n"
+               " w `address` `datasize` `data` | write at the address the data of size datasize          |\n"
+               " r `address` `datasize`        | read datasize bytes at address                          |\n"
+               " d `address`                   | dump in as text all data of the block stored in address |\n"
+               " d `address` `file`            | dump address data in file                               |\n"
+               " snap                          | give user a snap of the network (print)                 |\n"
+               " snap `file`                   | same as snap but stored in file                         |\n"
+               " dnet                          | write a .dot file of the network                        |\n"
+               " kill `id`                     | kill node refered by `id`                               |\n"
+               " revive `id`                   | revive `id`                                             |\n"
                "\n");
     } else if (0 == strcmp(args[0], "m")) {
         // ERRORS
