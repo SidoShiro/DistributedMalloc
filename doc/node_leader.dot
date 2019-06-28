@@ -1,0 +1,15 @@
+digraph Leader {
+  is_now_leader -> Send_LEADER_to_USER -> Idle;
+  Idle -> Idle;
+  Idle -> USER_WRITE;
+  Idle -> USER_READ;
+  Idle -> USER_SNAP;
+  Idle -> USER_MALLOC;
+  Idle -> USER_FREE;
+  Idle -> USER_DUMP;
+  USER_DUMP -> USER_READ;
+  Idle -> USER_KILL;
+  Idle -> USER_REVIVE;
+  USER_WRITE -> Send_WRITE -> Recv_OK_write -> Send_WRITE_DATA;
+  USER_READ -> Send_READ -> Recv_OK_read -> Recv_READ_DATA;
+}
