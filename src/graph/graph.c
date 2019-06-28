@@ -9,24 +9,31 @@ void print_adjency_matrix(struct adjency_matrix* a);
 struct adjency_matrix* dot_reader(char* path) {
 
     FILE *file = fopen(path, "r" );
-    unsigned* links = calloc(100, sizeof(unsigned[2]));
+    size_t nb_links_possible = 300;
+    unsigned* links = calloc(nb_links_possible, sizeof(unsigned[2]));
     unsigned max = 0;
     unsigned nb_links = 0;
     
     if (file != NULL) {
+
         char line [ 128 ];
         unsigned i = 0;
 
-        fgets ( line, sizeof line, file );
+        void *trash = fgets(line, sizeof line, file);
+        trash = trash; // boring flags
 
-        while ( fgets ( line, sizeof line, file ) != NULL && line[0] != '}') {
+        while (fgets(line, sizeof line, file) != NULL && line[0] != '}') {
             unsigned val[2] = {0, 0};
             get_values(line, val);
 
             unsigned tmp_max = val[0] > val[1] ? val[0] : val[1];
             max = max > tmp_max ? max : tmp_max; // The idea is to capture the largest id, for adjency dimensions
 
-            // TODO: Realloc if needed
+            if (nb_links == nb_links_possible) {
+                nb_links_possible *= 2;
+                links = realloc(links, nb_links_possible * sizeof(unsigned[2]));
+            }
+
             links[i] = val[0];
             links[i + 1] = val[1];
             i += 2;
@@ -45,7 +52,6 @@ struct adjency_matrix* dot_reader(char* path) {
 
 
 void get_values(char str[128], unsigned values[2]) {
-    char c;
     unsigned i = 0;
 
     // spaces
@@ -76,12 +82,14 @@ struct adjency_matrix* generate_adjency_matrix(unsigned* links, unsigned dim, un
         a->matrix[i] = calloc(sizeof(unsigned*), dim);
     }
 
-    for (unsigned i = 0; links[i]; ++i) {
-        a->matrix[links[i]][links[i + 1]] = 1;
-        a->matrix[links[i + 1]][links[i]] = 1;
+    for (unsigned i = 0; i < nb_links; ++i) {
+        a->matrix[links[2 * i]][links[2 * i + 1]] = 1;
+        a->matrix[links[2 * i + 1]][links[2 * i]] = 1;
         
         i += 1;
     }
+
+    
 
     return a;
 }
