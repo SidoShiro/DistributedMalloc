@@ -8,7 +8,7 @@
 #include "command_queue.h"
 #include "block.h"
 
-struct leader {
+struct leader_resources {
     struct blocks leader_blks;
     struct command_queue leader_command_queue;
 };
