@@ -9,8 +9,8 @@
 #include "block.h"
 
 struct leader_resources {
-    struct blocks leader_blks;
-    struct command_queue leader_command_queue;
+    struct blocks *leader_blks;
+    struct command_queue *leader_command_queue;
 };
 
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */
