@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     //start_cli();
 
     // Graph
-    struct adjency_matrix *a = dot_reader("../simplegraph.dot");
-    free_adjency_matrix(a);
+    struct adjacency_matrix *a = dot_reader("../simplegraph.dot");
+    free_adjacency_matrix(a);
     return 0;
 }
