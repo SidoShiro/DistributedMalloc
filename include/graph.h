@@ -3,26 +3,14 @@
 
 #include <stdlib.h>
 
-struct graph {
-    int x;
-    int y;
-};
 
-
-struct node {
-    unsigned id;
-    unsigned capacity;
-    struct node* next;
-};
-
-
-struct adjency_matrix {
+struct adjacency_matrix {
     unsigned **matrix;
     unsigned dimension;
 };
 
-struct adjency_matrix* dot_reader(char* path);
+struct adjacency_matrix* dot_reader(char* path);
 
-void free_adjency_matrix(struct adjency_matrix* a);
+void free_adjacency_matrix(struct adjacency_matrix* a);
 
 #endif //DISTRIBUTEDMALLOC_GRAPH_H

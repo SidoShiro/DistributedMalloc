@@ -2,11 +2,11 @@
 #include "graph.h"
 
 void get_values(char str[128], unsigned values[2]);
-struct adjency_matrix* generate_adjency_matrix(unsigned* links, unsigned max, unsigned nb_links);
-void print_adjency_matrix(struct adjency_matrix* a);
+struct adjacency_matrix* generate_adjacency_matrix(unsigned* links, unsigned max, unsigned nb_links);
+void print_adjacency_matrix(struct adjacency_matrix* a);
 
 
-struct adjency_matrix* dot_reader(char* path) {
+struct adjacency_matrix* dot_reader(char* path) {
 
     FILE *file = fopen(path, "r" );
     size_t nb_links_possible = 300;
@@ -27,7 +27,7 @@ struct adjency_matrix* dot_reader(char* path) {
             get_values(line, val);
 
             unsigned tmp_max = val[0] > val[1] ? val[0] : val[1];
-            max = max > tmp_max ? max : tmp_max; // The idea is to capture the largest id, for adjency dimensions
+            max = max > tmp_max ? max : tmp_max; // The idea is to capture the largest id, for adjacency dimensions
 
             if (nb_links == nb_links_possible) {
                 nb_links_possible *= 2;
@@ -42,10 +42,10 @@ struct adjency_matrix* dot_reader(char* path) {
         fclose ( file );
     }
 
-    struct adjency_matrix *a = generate_adjency_matrix(links, max + 1, nb_links);
+    struct adjacency_matrix *a = generate_adjacency_matrix(links, max + 1, nb_links);
     free(links);
 
-    print_adjency_matrix(a);
+    print_adjacency_matrix(a);
 
     return a;
 }
@@ -72,9 +72,9 @@ void get_values(char str[128], unsigned values[2]) {
     }
 }
 
-struct adjency_matrix* generate_adjency_matrix(unsigned* links, unsigned dim, unsigned nb_links) { // unused nb_links
+struct adjacency_matrix* generate_adjacency_matrix(unsigned* links, unsigned dim, unsigned nb_links) { // unused nb_links
 
-    struct adjency_matrix* a = malloc(sizeof(struct adjency_matrix));
+    struct adjacency_matrix* a = malloc(sizeof(struct adjacency_matrix));
     a->matrix = calloc(sizeof(unsigned*), dim);
     a->dimension = dim;
     // +1 cause id0 is for user ?
@@ -94,7 +94,7 @@ struct adjency_matrix* generate_adjency_matrix(unsigned* links, unsigned dim, un
     return a;
 }
 
-void free_adjency_matrix(struct adjency_matrix* a) {
+void free_adjacency_matrix(struct adjacency_matrix* a) {
     for (unsigned i = 0; i < a->dimension; ++i) {
         free(a->matrix[i]);
     }
@@ -102,7 +102,7 @@ void free_adjency_matrix(struct adjency_matrix* a) {
     free(a);
 }
 
-void print_adjency_matrix(struct adjency_matrix* a) {
+void print_adjacency_matrix(struct adjacency_matrix* a) {
     for (unsigned i = 0; i < a->dimension; ++i) {
         unsigned j = 0;
         for (; j < a->dimension - 1; ++j) {
