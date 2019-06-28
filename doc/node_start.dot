@@ -1,0 +1,4 @@
+digraph NodeStart {
+  NodeInit -> Send_LEADER;
+  Send_LEADER -> Recv_LEADER;
+}
