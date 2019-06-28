@@ -1,0 +1,11 @@
+digraph User_Command_Queue {
+
+  Command_1 [shape=box]
+  Command_2 [shape=box]
+  Command_3 [shape=box]
+  Leader    [shape=diamond]
+
+  Command_1 -> Command_2 -> Command_3;
+  User -> Command_1;
+  Command_3 -> Leader;
+}
