@@ -2,7 +2,7 @@
 #define DISTRIBUTEDMALLOC_UTILS_H
 
 #include <stdlib.h>
-
+#include <stdio.h>
 struct a {
     int x;
     int y;
