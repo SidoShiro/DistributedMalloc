@@ -1,4 +1,5 @@
 #include "cli.h"
+#include "graph.h"
 #include "utils.h"
 
 #include <mpi.h>
@@ -10,6 +11,8 @@ int main(int argc, char **argv) {
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
 
     // Load Graph Here
+    struct adjacency_matrix *a = dot_reader("../simplegraph.dot");
+    free_adjacency_matrix(a);
 
     // Generate Adjacency Matrix Here
     void *adj_mat_network = NULL;
