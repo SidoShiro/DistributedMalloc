@@ -11,7 +11,7 @@ mkdir build
 cd build
 cmake ..
 make
-./dmalloc [DOTFILE]
+mpirun --hostfile ../hostfile dmalloc [DOTFILE]
 ```
 
 In project directory:
@@ -19,15 +19,9 @@ In project directory:
 ```sh
 cmake .
 make
-./dmalloc [DOTFILE]
+mpirun --hostfile hostfile dmalloc [DOTFILE]
 ```
 
-
-dmalloc usage :
-
-```sh
-./dmalloc [DOTFILE]
-```
 
 # Tooltips
 
@@ -88,4 +82,17 @@ dmalloc usage :
 | kill `id`                         | kill node refered by `id`                               |
 | revive `id`                       | revive `id`                                             |
 
+## Node Life Cycles
+
+### Node Leader Elections
+
+![Graph leader election](doc/node_election.png)
+
+### Node Leader Cycle
+
+![Graph leader cycle](doc/node_leader_proc.png)
+
+### Node Cycle
+
+![Graph leader election](doc/node_proc.png)
 
