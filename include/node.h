@@ -10,8 +10,6 @@ struct node {
     unsigned char isleader; // 1 = is Leader, 0 = no
     // map; // From .dot file
     size_t size;
-    /* LEADER ONLY */
-    struct blocks *blk;
 };
 
 struct node *generate_node(unsigned short id, size_t size);

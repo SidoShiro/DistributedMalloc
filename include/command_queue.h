@@ -4,16 +4,16 @@
 #include <stdlib.h>
 
 enum user_command {
-    MALLOC, // Data => Size
-    FREE, // Data => Address
-    WRITE, // Data => Address; Data size; Data
-    READ, // Data => Address; Data size
-    DUMP, // Data => Address
-    SNAP,
-    DNET,
-    KILL, // Data => id
-    REVIVE, // Data => id
-    NONE
+    USER_OP_MALLOC, // Data => Size
+    USER_OP_FREE, // Data => Address
+    USER_OP_WRITE, // Data => Address; Data size; Data
+    USER_OP_READ, // Data => Address; Data size
+    USER_OP_DUMP, // Data => Address
+    USER_OP_SNAP,
+    USER_OP_DNET,
+    USER_OP_KILL, // Data => id
+    USER_OP_REVIVE, // Data => id
+    USER_OP_NONE
 };
 
 struct command_queue {
