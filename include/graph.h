@@ -16,8 +16,11 @@ struct linked_list {
 
 struct personal_map {
     struct linked_list** paths;
-    unsigned nb_paths; // redundent but why not
-    unsigned id; // redundent but why not
+    // Import things:
+    // - paths[id] == NULL (self)
+    // - paths[0] == NULL (user)
+    unsigned nb_paths;
+    unsigned id;
 };
 
 
