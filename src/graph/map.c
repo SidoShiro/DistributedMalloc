@@ -23,16 +23,17 @@ struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned i
     for (unsigned i = 1; i < pm->nb_paths; ++i) { // Node 0 shouldn't exist. TODO: check that
 
         if (i == id)
-            continue; // TODO: care while doing free
+            continue;
 
         // with the distance, comptute shortest paths;
 
-
-        struct linked_list* path = init_linked(i, NULL);
+        struct linked_list* path = NULL;
         unsigned current_node_id = i;
 
         // FIXME : Pas très opti, mais depmande bien 3~5h de plus pour tout opti
-        while (current_node_id != id) { // TODO : set distance of id to -1, but not there
+        while (current_node_id != id) {
+
+            path = init_linked(current_node_id, path);
 
             // Get all 'parents' of this node (each node pointing to him)
             struct linked_list* parents = add_childrens(a, current_node_id, NULL);
@@ -40,7 +41,7 @@ struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned i
             // for all of them, get the one with the lowest distance
             unsigned closest = get_closest(distances, parents);
 
-            path = init_linked(closest, path); // push front
+            //path = init_linked(closest, path); // push front
             current_node_id = closest;
             free_linked_list(parents);
         }
