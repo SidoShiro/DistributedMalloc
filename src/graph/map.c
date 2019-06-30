@@ -4,6 +4,7 @@
 struct linked_list* init_linked(unsigned id, struct linked_list* next);
 void lkl_push_back(struct linked_list* lkl, unsigned id);
 struct personal_map* init_personal_map(unsigned nb_paths, unsigned id);
+void show_what_you_got(struct linked_list* lkl);
 
 unsigned* compute_distances(struct adjacency_matrix *a, unsigned id);
 struct linked_list* add_childrens(struct adjacency_matrix* a, unsigned id, struct linked_list* lkl);
@@ -16,7 +17,7 @@ struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned i
     unsigned* distances = compute_distances(a, id);
     distances = distances; // FIXME
 
-    for (unsigned i = 1; i < pm->nb_paths; ++i) {
+    for (unsigned i = 0; i < pm->nb_paths; ++i) {
         // pm->paths[i] = compute_distances(a, id);
         // with the distance, comptute shortest paths
     }
@@ -47,7 +48,6 @@ unsigned* compute_distances(struct adjacency_matrix *a, unsigned id) {
                 distances[childrens->id] = iteration;
                 // add them to a queue // rofl, need to create one
                 childrens_next_it = add_childrens(a, childrens->id, childrens_next_it);
-
             }
             // else : nothing
 
@@ -108,6 +108,14 @@ void free_linked_list(struct linked_list* lkl) {
         free(lkl);
         lkl = lkl2;
     }
+}
+
+void show_what_you_got(struct linked_list* lkl) {
+    while (lkl != NULL) {
+        printf("%u ", lkl->id);
+        lkl = lkl->next;
+    }
+    printf("\n");
 }
 
 // Personal map: utils
