@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "utils.h"
 
 struct linked_list* init_linked(unsigned id, struct linked_list* next);
 void lkl_push_back(struct linked_list* lkl, unsigned id);
@@ -20,6 +21,8 @@ struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned i
         // with the distance, comptute shortest paths
     }
 
+    free(distances);
+
     return pm;
 }
 
@@ -27,6 +30,7 @@ struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned i
 unsigned* compute_distances(struct adjacency_matrix *a, unsigned id) {
 
     unsigned* distances = calloc(a->dimension, sizeof(unsigned));
+    distances[id] = 1; // just a security
     unsigned iteration = 1;
 
     // search childrens
@@ -53,6 +57,7 @@ unsigned* compute_distances(struct adjacency_matrix *a, unsigned id) {
         }
         iteration += 1;
         childrens = childrens_next_it;
+        childrens_next_it = NULL;
     }
 
     return distances;
@@ -111,7 +116,7 @@ struct personal_map* init_personal_map(unsigned nb_paths, unsigned id) {
     struct personal_map* pm = malloc(sizeof(*pm));
     pm->paths = malloc(sizeof(struct linked_list*) * nb_paths);
     for (unsigned i = 0; i < nb_paths; ++i) {
-        pm->paths[i] = malloc(sizeof(struct linked_list));
+        pm->paths[i] = calloc(1, sizeof(struct linked_list));
     }
     pm->nb_paths = nb_paths;
     pm->id = id;
