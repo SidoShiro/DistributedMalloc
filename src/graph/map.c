@@ -1,13 +1,16 @@
 #include "graph.h"
 #include "utils.h"
 
+// private utils function
 struct linked_list* init_linked(unsigned id, struct linked_list* next);
 void lkl_push_back(struct linked_list* lkl, unsigned id);
 struct personal_map* init_personal_map(unsigned nb_paths, unsigned id);
 void show_what_you_got(struct linked_list* lkl);
 
+// private core function 
 unsigned* compute_distances(struct adjacency_matrix *a, unsigned id);
 struct linked_list* add_childrens(struct adjacency_matrix* a, unsigned id, struct linked_list* lkl);
+unsigned get_closest(unsigned* distances, struct linked_list* nodes);
 
 // Compute all shortests paths for the node 'id' to every others
 struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned id) {
@@ -17,9 +20,33 @@ struct personal_map* compute_personal_map(struct adjacency_matrix* a, unsigned i
     unsigned* distances = compute_distances(a, id);
     distances = distances; // FIXME
 
-    for (unsigned i = 0; i < pm->nb_paths; ++i) {
-        // pm->paths[i] = compute_distances(a, id);
-        // with the distance, comptute shortest paths
+    for (unsigned i = 1; i < pm->nb_paths; ++i) { // Node 0 shouldn't exist. TODO: check that
+
+        if (i == id)
+            continue; // TODO: care while doing free
+
+        // with the distance, comptute shortest paths;
+
+
+        struct linked_list* path = init_linked(i, NULL);
+        unsigned current_node_id = i;
+
+        // FIXME : Pas très opti, mais depmande bien 3~5h de plus pour tout opti
+        while (current_node_id != id) { // TODO : set distance of id to -1, but not there
+
+            // Get all 'parents' of this node (each node pointing to him)
+            struct linked_list* parents = add_childrens(a, current_node_id, NULL);
+
+            // for all of them, get the one with the lowest distance
+            unsigned closest = get_closest(distances, parents);
+
+            path = init_linked(closest, path); // push front
+            current_node_id = closest;
+            free_linked_list(parents);
+        }
+
+        pm->paths[i] = path;
+
     }
 
     free(distances);
@@ -77,6 +104,22 @@ struct linked_list* add_childrens(struct adjacency_matrix* a, unsigned id, struc
     return lkl;
 }
 
+unsigned get_closest(unsigned* distances, struct linked_list* nodes) {
+    unsigned min_id = nodes->id;
+    unsigned min = distances[min_id];
+    nodes = nodes->next; // fortement connexe so should work well
+
+    while (nodes) {
+        unsigned curr_dist = distances[nodes->id];
+        if (curr_dist < min) {
+            min = curr_dist;
+            min_id = nodes->id;
+        }
+        nodes = nodes->next;
+    }
+    return min_id;
+}
+
 
 
 
@@ -122,10 +165,7 @@ void show_what_you_got(struct linked_list* lkl) {
 
 struct personal_map* init_personal_map(unsigned nb_paths, unsigned id) {
     struct personal_map* pm = malloc(sizeof(*pm));
-    pm->paths = malloc(sizeof(struct linked_list*) * nb_paths);
-    for (unsigned i = 0; i < nb_paths; ++i) {
-        pm->paths[i] = calloc(1, sizeof(struct linked_list));
-    }
+    pm->paths = calloc(nb_paths, sizeof(struct linked_list*));
     pm->nb_paths = nb_paths;
     pm->id = id;
     return pm;
@@ -133,7 +173,8 @@ struct personal_map* init_personal_map(unsigned nb_paths, unsigned id) {
 
 void free_personal_map(struct personal_map* pm) {
     for(unsigned i=0; i < pm->nb_paths; ++i) {
-        free_linked_list(pm->paths[i]);
+        if (pm->paths[i])
+            free_linked_list(pm->paths[i]);
     }
     free(pm->paths);
     free(pm);
