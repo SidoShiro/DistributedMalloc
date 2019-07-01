@@ -18,7 +18,9 @@ set(SRCS
     src/utils/command_queue.c
     src/graph/graph.c
     src/graph/map.c
+    src/network/leader.c
     )
+
 
 include_directories("include/")
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})

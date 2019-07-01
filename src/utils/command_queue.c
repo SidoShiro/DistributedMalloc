@@ -43,5 +43,5 @@ void *peek_command(struct command_queue *head) {
 enum user_command peek_user_command(struct command_queue *head) {
     if (head)
         return head->command;
-    return NONE;
+    return USER_OP_NONE;
 }
