@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
         // Start Leader !
         if (rank == 1) {
             n->isleader = 1;
-            leader_loop(DEF_NODE_USER);
+            leader_loop(n, DEF_NODE_USER);
         }
 
 
