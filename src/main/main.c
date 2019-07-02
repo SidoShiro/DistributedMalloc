@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     // Start CLI
     if (rank == DEF_NODE_USER) {
         printf("starting %d processes\n", size);
-        debug("Start User", rank);
+        debug("Start User", DEF_NODE_USER);
         start_cli();
     }
     else
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
         // Form rank number !
 
         // Start Leader !
-        if (rank == leader) {
+        if (n->id == leader) {
             n->isleader = 1;
             leader_loop(n, DEF_NODE_USER);
         }
