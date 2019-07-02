@@ -2,6 +2,7 @@
 #include "graph.h"
 #include "utils.h"
 #include "debug.h"
+#include "leader_election.h"
 
 #include <mpi.h>
 #include <stdio.h>
@@ -12,8 +13,8 @@ int main(int argc, char **argv) {
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
 
     // Load Graph Here
-    struct adjacency_matrix *a = dot_reader("../simplegraph.dot");
-    free_adjacency_matrix(a);
+    //struct adjacency_matrix *a = dot_reader("../simplegraph.dot");
+    //free_adjacency_matrix(a);
 
     // Generate Adjacency Matrix Here
     void *adj_mat_network = NULL;
@@ -37,21 +38,16 @@ int main(int argc, char **argv) {
     else
     {
         debug("Start Node", rank);
-        // TODO: Je sais pas je suis senser faire quoi
+    
+        unsigned leader = leader_election(rank, size);
 
-        // Node Creation
-        // Form rank number !
+        printf("Node %u finished election. Leader is: %u\n", rank, leader);
 
-        // Start Leader !
-
-
-        // Wait Leader
-
-        // If is leader
-
-
-
-        // else
+        /*
+        while (1) {
+            // routine
+        }
+        */
 
 
 
