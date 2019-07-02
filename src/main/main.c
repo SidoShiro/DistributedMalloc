@@ -1,6 +1,9 @@
 #include "cli.h"
 #include "graph.h"
 #include "utils.h"
+#include "node.h"
+#include "leader.h"
+#include "globals.h"
 
 #include <mpi.h>
 #include <stdio.h>
@@ -28,7 +31,7 @@ int main(int argc, char **argv) {
     // TODO: Parse and Work on bin arguments
 
     // Start CLI
-    if (rank == 0) {
+    if (rank == DEF_NODE_USER) {
         printf("starting %d processes\n", size);
         start_cli();
     }
@@ -37,9 +40,14 @@ int main(int argc, char **argv) {
         // TODO: Je sais pas je suis senser faire quoi
 
         // Node Creation
+        struct node *n = generate_node(rank, DEF_NODE_SIZE);
         // Form rank number !
 
         // Start Leader !
+        if (rank == 1) {
+            n->isleader = 1;
+            leader_loop(DEF_NODE_USER);
+        }
 
 
         // Wait Leader
