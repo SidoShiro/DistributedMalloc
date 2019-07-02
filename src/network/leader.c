@@ -41,7 +41,7 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
     int count = sizeof(struct message);
     MPI_Request r;
     MPI_Status st;
-    MPI_Irecv(buff, count, MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
+    MPI_Irecv(buff, count, MPI_BYTE, user, 0, MPI_COMM_WORLD, &r);
 
     if (0 == MPI_Wait(&r, &st)) {
         struct message *m = buff;
@@ -57,7 +57,7 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                 struct data_write *d_w = generate_data_write(m->size, m->size, NULL);
                 void *wbuff = malloc(sizeof(char) * (m->size + 1));
                 debug("Leader wait DATA from User for OP WRITE", n->id);
-                MPI_Irecv(wbuff, m->size * sizeof(char), MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
+                MPI_Irecv(wbuff, m->size * sizeof(char), MPI_BYTE, user, 0, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
                     d_w->data = wbuff;
                     n_command->data = d_w;
