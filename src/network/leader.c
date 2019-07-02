@@ -35,7 +35,6 @@ struct address_search *search_at_address(size_t address, struct leader_resources
 
 
 void get_command(struct node *n, struct leader_resources *l_r, unsigned short user) {
-    (void) n;
     // int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
     //              int tag, MPI_Comm comm, MPI_Request *request);
     void *buff = malloc(sizeof(struct message));
@@ -55,7 +54,7 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                 n_command->command = m->op;
                 n_command->data = NULL;
                 struct data_write *d_w = malloc(sizeof(struct data_write));
-                void *wbuff = malloc(sizeof(char) * m->size);
+                void *wbuff = malloc(sizeof(char) * (m->size + 1));
                 debug("Leader wait data for OP WRITE from user", n->id);
                 MPI_Irecv(wbuff, m->size * sizeof(char), MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
@@ -64,9 +63,10 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                     d_w->address = m->id_o;
                     n_command->data = d_w;
                 }
-                debug("Leader recv from User OP WRITE, completly", n->id);
+                debug("Leader recv from User OP WRITE, completely", n->id);
                 debug("Got:", n->id);
-                debug(d_w->data, n->id);
+                debug_n(d_w->data, n->id, d_w->size);
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             case OP_READ:
                 n_command->command = m->op;
@@ -75,12 +75,13 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                 d_r->size = m->size;
                 d_r->address = m->address;
                 n_command->data = d_r;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             default:
                 break;
         }
-        l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
     }
+    free(buff);
 }
 
 void execute_malloc(struct node *n, struct leader_resources *l_r) {
@@ -160,7 +161,6 @@ void leader_loop(struct node *n, unsigned short terminal_id) {
         get_command(n, l_r, terminal_id);
 
         // execute_command(n, l_r);
-
         if (die == 1)
             break;
     }

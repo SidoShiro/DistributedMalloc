@@ -1,3 +1,4 @@
+#include <debug.h>
 #include "command_queue.h"
 
 struct command_queue *generate_command_queue(enum operation op, void *data) {
@@ -29,11 +30,11 @@ struct command_queue *pop_command(struct command_queue *head) {
 
 // Push command in queue, return head, can have head=NULL for init queue
 struct command_queue *push_command(struct command_queue *head, struct command_queue *new_elt) {
-    if (!head) {
+    if (head == NULL) {
         return new_elt;
     }
     struct command_queue *iter = head;
-    while (iter->next) {
+    while (iter->next != NULL) {
         iter = iter->next;
     }
     iter->next = new_elt;
