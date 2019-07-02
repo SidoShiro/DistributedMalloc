@@ -20,7 +20,7 @@ set(SRCS
     src/graph/map.c
     src/network/leader.c
     src/utils/debug.c
-    )
+        src/cli/user.c)
 
 
 include_directories("include/")
