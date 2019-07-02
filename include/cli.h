@@ -12,6 +12,6 @@
 
 void start_cli();
 
-void send_command(enum operation op, void *data);
+void send_command(enum operation op, void *data, unsigned short leader);
 
 #endif /* !DISTRIBUTEDMALLOC_CLI_H */
