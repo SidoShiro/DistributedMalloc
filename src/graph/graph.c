@@ -81,12 +81,11 @@ struct adjacency_matrix* generate_adjacency_matrix(unsigned* links, unsigned dim
     for (unsigned i = 0; i < dim; ++i) {
         a->matrix[i] = calloc(sizeof(unsigned*), dim);
     }
+    
 
-    for (unsigned i = 0; i < nb_links; ++i) {
-        a->matrix[links[2 * i]][links[2 * i + 1]] = 1;
-        a->matrix[links[2 * i + 1]][links[2 * i]] = 1;
-        
-        i += 1;
+    for (unsigned i = 0; i < nb_links * 2; i += 2) {
+        a->matrix[links[i]][links[i + 1]] = 1;
+        a->matrix[links[i + 1]][links[i]] = 1;
     }
 
     

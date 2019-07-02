@@ -2,6 +2,7 @@
 *idea/*
 *cmake-build-debug/*
 *build/*
+*vscode/*
 
 # Prerequisites
 *.d
