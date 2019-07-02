@@ -54,14 +54,12 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                 debug("Leader recv OP WRITE from User", n->id);
                 n_command->command = m->op;
                 n_command->data = NULL;
-                struct data_write *d_w = malloc(sizeof(struct data_write));
+                struct data_write *d_w = generate_data_write(m->size, m->size, NULL);
                 void *wbuff = malloc(sizeof(char) * (m->size + 1));
                 debug("Leader wait DATA from User for OP WRITE", n->id);
                 MPI_Irecv(wbuff, m->size * sizeof(char), MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
                     d_w->data = wbuff;
-                    d_w->size = m->size;
-                    d_w->address = m->id_o;
                     n_command->data = d_w;
                 }
                 debug("Leader recv DATA from User for OP WRITE : ", n->id);
@@ -72,10 +70,16 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                 debug("Leader recv OP READ from User", n->id);
                 n_command->command = m->op;
                 n_command->data = NULL;
-                struct data_write *d_r = malloc(sizeof(struct data_read));
-                d_r->size = m->size;
-                d_r->address = m->address;
+                struct data_read *d_r = generate_data_read(m->address, m->size);
                 n_command->data = d_r;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
+            case OP_MALLOC:
+                debug("Leader recv OP MALLOC from User", n->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                struct data_size *d_s = generate_data_size(m->size);
+                n_command->data = d_s;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             default:
