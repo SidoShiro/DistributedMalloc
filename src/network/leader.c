@@ -1,7 +1,8 @@
 #include "node.h"
 #include "leader.h"
 #include "globals.h"
-// #include "debug.h"
+#include "message.h"
+#include "debug.h"
 
 #include <mpi.h>
 
@@ -33,7 +34,6 @@ struct address_search *search_at_address(size_t address, struct leader_resources
 }
 
 
-
 void get_command(struct node *n, struct leader_resources *l_r, unsigned short user) {
     (void) n;
     // int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
@@ -45,29 +45,31 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
     MPI_Irecv(buff, count, MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
 
     if (0 == MPI_Wait(&r, &st)) {
-        // debug("Leader receive", n->id);
+        debug("Leader receive", n->id);
         struct message *m = buff;
-        struct command_queue *n_command = malloc(sizeof(struct command_queue));
+        struct command_queue *n_command = generate_command_queue(m->op, NULL);
         switch (m->op) {
             case OP_OK:
                 break;
             case OP_WRITE:
-                n_command->command = USER_OP_WRITE;
+                n_command->command = m->op;
                 n_command->data = NULL;
                 struct data_write *d_w = malloc(sizeof(struct data_write));
                 void *wbuff = malloc(sizeof(char) * m->size);
-                // debug("Leader wait data for OP WRITE from user", n->id);
-                MPI_Irecv(wbuff, m->size, MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
+                debug("Leader wait data for OP WRITE from user", n->id);
+                MPI_Irecv(wbuff, m->size * sizeof(char), MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
                     d_w->data = wbuff;
                     d_w->size = m->size;
                     d_w->address = m->id_o;
                     n_command->data = d_w;
                 }
-                // debug("Leader recv from User OP WRITE, completly", n->id);
+                debug("Leader recv from User OP WRITE, completly", n->id);
+                debug("Got:", n->id);
+                debug(d_w->data, n->id);
                 break;
             case OP_READ:
-                n_command->command = USER_OP_WRITE;
+                n_command->command = m->op;
                 n_command->data = NULL;
                 struct data_write *d_r = malloc(sizeof(struct data_read));
                 d_r->size = m->size;
@@ -105,31 +107,33 @@ void execute_write(struct node *n, struct leader_resources *l_r) {
 }
 
 void execute_command(struct node *n, struct leader_resources *l_r) {
-    if (peek_user_command(l_r->leader_command_queue) != USER_OP_NONE) {
+    if (peek_user_command(l_r->leader_command_queue) != OP_NONE) {
 
         switch (peek_user_command(l_r->leader_command_queue)) {
-            case USER_OP_MALLOC:
+            case OP_MALLOC:
                 execute_malloc(n, l_r);
                 break;
-            case USER_OP_FREE:
+            case OP_FREE:
                 break;
-            case USER_OP_WRITE:
+            case OP_WRITE:
                 execute_write(n, l_r);
                 break;
-            case USER_OP_READ:
+            case OP_READ:
                 execute_read(n, l_r);
                 break;
-            case USER_OP_DUMP:
+            case OP_DUMP:
                 break;
-            case USER_OP_SNAP:
+            case OP_SNAP:
                 break;
-            case USER_OP_DNET:
+            case OP_KILL:
                 break;
-            case USER_OP_KILL:
+            case OP_REVIVE:
                 break;
-            case USER_OP_REVIVE:
+            case OP_NONE:
                 break;
-            case USER_OP_NONE:
+            case OP_OK:
+                break;
+            default:
                 break;
         }
     }
@@ -155,7 +159,7 @@ void leader_loop(struct node *n, unsigned short terminal_id) {
     while (1) {
         get_command(n, l_r, terminal_id);
 
-        execute_command(n, l_r);
+        // execute_command(n, l_r);
 
         if (die == 1)
             break;
