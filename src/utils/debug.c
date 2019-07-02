@@ -33,9 +33,9 @@ void debug(char *msg, unsigned short id) {
             "\033[1;36m"
     };
     if (id == 0) {
-        printf("\033[1;0m%s\033[0m\n", msg);
+        printf("\033[1;0mu: %s\033[0m\n", msg);
         return;
     }
     unsigned short c = id % nb_vars;
-    printf("%s%s%s\n", colors[c], msg, reset);
+    printf("%s%d: %s%s\n", colors[c], id, msg, reset);
 }
