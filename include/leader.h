@@ -13,4 +13,6 @@ struct leader_resources {
     struct command_queue *leader_command_queue;
 };
 
+void leader_loop(unsigned short terminal_id);
+
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */
