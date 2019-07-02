@@ -13,6 +13,13 @@ struct leader_resources {
     struct command_queue *leader_command_queue;
 };
 
-void leader_loop(unsigned short terminal_id);
+struct address_search {
+    unsigned short id;
+    size_t address_r;
+    size_t address;
+    size_t size;
+};
+
+void leader_loop(struct node *n, unsigned short terminal_id);
 
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */
