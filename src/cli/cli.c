@@ -287,6 +287,7 @@ void start_cli() {
     unsigned short leader = get_leader();
 
     while (no_quit) {
+        fflush(0);
         printf("dmalloc $ ");
         fflush(0);
         cmd = read_cmd();
