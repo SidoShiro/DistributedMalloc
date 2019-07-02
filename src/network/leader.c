@@ -164,9 +164,13 @@ void leader_loop(struct node *n, unsigned short terminal_id) {
     */
     int die = -1;
     while (1) {
+        // Get command from user
         get_command(n, l_r, terminal_id);
 
-        // execute_command(n, l_r);
+        // Execute Commands
+        execute_command(n, l_r);
+
+        // Break on death
         if (die == 1)
             break;
     }
