@@ -44,18 +44,19 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
     MPI_Irecv(buff, count, MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
 
     if (0 == MPI_Wait(&r, &st)) {
-        debug("Leader receive", n->id);
         struct message *m = buff;
         struct command_queue *n_command = generate_command_queue(m->op, NULL);
         switch (m->op) {
             case OP_OK:
+                debug("Leader recv OP OK from User", n->id);
                 break;
             case OP_WRITE:
+                debug("Leader recv OP WRITE from User", n->id);
                 n_command->command = m->op;
                 n_command->data = NULL;
                 struct data_write *d_w = malloc(sizeof(struct data_write));
                 void *wbuff = malloc(sizeof(char) * (m->size + 1));
-                debug("Leader wait data for OP WRITE from user", n->id);
+                debug("Leader wait DATA from User for OP WRITE", n->id);
                 MPI_Irecv(wbuff, m->size * sizeof(char), MPI_CHAR, user, 0, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
                     d_w->data = wbuff;
@@ -63,12 +64,12 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                     d_w->address = m->id_o;
                     n_command->data = d_w;
                 }
-                debug("Leader recv from User OP WRITE, completely", n->id);
-                debug("Got:", n->id);
+                debug("Leader recv DATA from User for OP WRITE : ", n->id);
                 debug_n(d_w->data, n->id, d_w->size);
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             case OP_READ:
+                debug("Leader recv OP READ from User", n->id);
                 n_command->command = m->op;
                 n_command->data = NULL;
                 struct data_write *d_r = malloc(sizeof(struct data_read));
@@ -78,6 +79,7 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             default:
+                debug("Leader recv ANY OP from User", n->id);
                 break;
         }
     }
