@@ -4,6 +4,7 @@
 #include "node.h"
 #include "leader.h"
 #include "globals.h"
+#include "debug.h"
 
 #include <mpi.h>
 #include <stdio.h>
@@ -33,10 +34,12 @@ int main(int argc, char **argv) {
     // Start CLI
     if (rank == DEF_NODE_USER) {
         printf("starting %d processes\n", size);
+        debug("Start User", rank);
         start_cli();
     }
     else
     {
+        debug("Start Node", rank);
         // TODO: Je sais pas je suis senser faire quoi
 
         // Node Creation

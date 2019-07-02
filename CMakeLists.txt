@@ -19,6 +19,7 @@ set(SRCS
     src/graph/graph.c
     src/graph/map.c
     src/network/leader.c
+    src/utils/debug.c
     )
 
 
