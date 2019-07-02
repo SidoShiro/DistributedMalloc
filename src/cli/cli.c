@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <command_queue.h>
 #include "cli.h"
 
 char *read_cmd() {
@@ -100,6 +101,8 @@ void execute(char **args) {
         size_t size = 0;
         if (1 == sscanf(args[1], "%zu", &size)) {
             printf("Execute DMALLOC of %zu\n", size);
+            struct data_size *d_s = generate_data_size(size);
+            send_command(OP_MALLOC, d_s);
         } else {
             error_msg("m  require an argument 'size' which can be casted as a positive integer");
         }
@@ -136,6 +139,8 @@ void execute(char **args) {
         if (1 == sscanf(args[1], "%zu", &address)) {
             if (1 == sscanf(args[2], "%zu", &datasize)) {
                 printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
+                struct data_write *d_w = generate_data_write(address, datasize, args[3]);
+                send_command(OP_WRITE, d_w);
             } else {
                 error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
             }
@@ -158,6 +163,8 @@ void execute(char **args) {
         if (1 == sscanf(args[1], "%zu", &address)) {
             if (1 == sscanf(args[2], "%zu", &datasize)) {
                 printf("Execute Read at %zu, %zu bytes\n", address, datasize);
+                struct data_read *d_r = generate_data_read(address, datasize);
+                send_command(OP_READ, d_r);
             } else {
                 error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
             }
