@@ -21,7 +21,8 @@ set(SRCS
     src/network/leader.c
     src/network/leader_election.c
     src/utils/debug.c
-        src/cli/user.c)
+    src/cli/user.c
+    src/network/communication.c)
 
 
 include_directories("include/")
