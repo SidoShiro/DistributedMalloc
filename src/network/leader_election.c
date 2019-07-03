@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "debug.h"
 #include "message.h"
+#include "communication.h"
 
 #include "leader_election.h"
 
@@ -17,12 +18,34 @@ unsigned leader_election(unsigned id, unsigned network_size) {
         if (new_leader < leader) {
             leader = new_leader;
             m = generate_message(id, next, leader, 0, 0, OP_LEADER);
-            MPI_Send(m, sizeof(*m), MPI_BYTE, next, 201, MPI_COMM_WORLD);
+            // Old
+            //MPI_Send(m, sizeof(*m), MPI_BYTE, next, 201, MPI_COMM_WORLD);
+            // New_v2
+            while (!send_safe_message(m)) {
+                // What if is was also m->id_o
+                next = next_id(next, network_size);
+                if (m->id_t == m->id_o) { // On devait dire au prochain qu'il était le leader
+                    // FIXME: broadcast, restart
+                }
+
+                if (next == id) { // envoie à sois même => tous les autres sont morts .. fuck ?
+                    // FIXME: envoyer un message d'erreur au user ?
+                    break;
+                }
+
+                m->id_t = next;
+            }
+            if (next == id)
+                break;
+            // EndNew
+
             free(m);
         }
 
-        MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, 201, MPI_COMM_WORLD,
-            MPI_STATUS_IGNORE);
+        // Old
+        //MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, 201, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        // New
+        receive_safe_message(m);
 
         if (m->op == OP_OK)
             break; // Should be replaced by a OP_LEADER_OK
@@ -33,7 +56,7 @@ unsigned leader_election(unsigned id, unsigned network_size) {
                 // send OK
                 m = generate_message(id, 666, leader, 0, 0, OP_OK);
                 for (unsigned i = 1; i < network_size; ++i) {
-                    MPI_Send(m, sizeof(*m), MPI_BYTE, i, 201, MPI_COMM_WORLD);
+                    MPI_Send(m, sizeof(*m), MPI_BYTE, i, 201, MPI_COMM_WORLD); // FIXME : broadcast, need to be safe ?
                 }
                 free(m);
 
