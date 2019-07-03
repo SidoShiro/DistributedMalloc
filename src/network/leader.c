@@ -6,26 +6,36 @@
 
 #include <mpi.h>
 
-struct leader_resources *generate_leader_resources() {
+struct leader_resources *generate_leader_resources(size_t nb_nodes) {
     struct leader_resources *l_r = malloc(sizeof(struct leader_resources));
-    l_r->leader_blks = NULL;
+    l_r->leader_blks = init_nodes_same_size(nb_nodes, 8);
     l_r->leader_command_queue = NULL;
     return l_r;
 }
 
-void malloc_block() {
-
+/**
+ * Allocated memory for the User, using free space of nodes
+ * @param size
+ * @param l_r
+ * @return 1 if okay, 0 if no blocks possible for this size
+ */
+int alloc_memory(size_t size, struct leader_resources *l_r) {
+    struct blocks *blks = l_r->leader_blks;
+    (void) blks;
+    (void) size;
+    return 0;
 }
 
 struct address_search *search_at_address(size_t address, struct leader_resources *l_r) {
     struct blocks *bs = l_r->leader_blks;
     for (size_t i = 0; i < bs->nb_blocks; i++) {
         struct block *b = bs->blks[i];
-        if (b->address >= address && b->address + b->size < address) {
+        if (b->virtual_address >= address && b->virtual_address + b->size < address) {
             struct address_search *add_s = malloc(sizeof(struct address_search));
             add_s->size = b->size;
-            add_s->address = b->address;
-            add_s->address_r = address;
+            add_s->v_address = b->virtual_address;
+            add_s->n_address = b->node_address;
+            add_s->r_address = address;
             add_s->id = b->id;
             return add_s;
         }
@@ -41,7 +51,7 @@ void get_command(struct node *n, struct leader_resources *l_r, unsigned short us
     int count = sizeof(struct message);
     MPI_Request r;
     MPI_Status st;
-    MPI_Irecv(buff, count, MPI_BYTE, user, 0, MPI_COMM_WORLD, &r);
+    MPI_Irecv(buff, count, MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &r);
 
     if (0 == MPI_Wait(&r, &st)) {
         struct message *m = buff;
@@ -147,9 +157,9 @@ void execute_command(struct node *n, struct leader_resources *l_r) {
 }
 
 
-void leader_loop(struct node *n, unsigned short terminal_id) {
+void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_nodes) {
     // Init leader resource
-    struct leader_resources *l_r = generate_leader_resources();
+    struct leader_resources *l_r = generate_leader_resources(nb_nodes);
 
     /*
     // MPI_Isend();

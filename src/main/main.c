@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
         // Start Leader !
         if (n->id == leader) {
             n->isleader = 1;
-            leader_loop(n, DEF_NODE_USER);
+            leader_loop(n, DEF_NODE_USER, size - 1);
         }
 
         /*

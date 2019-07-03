@@ -15,11 +15,12 @@ struct leader_resources {
 
 struct address_search {
     unsigned short id;
-    size_t address_r;
-    size_t address;
+    size_t r_address;
+    size_t v_address;
+    size_t n_address;
     size_t size;
 };
 
-void leader_loop(struct node *n, unsigned short terminal_id);
+void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_nodes);
 
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */
