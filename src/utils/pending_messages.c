@@ -23,3 +23,11 @@ void pending_messages_free(struct pending_messages* pm) {
     free(pm);
 }
 
+struct message* pending_messages_pop(struct pending_messages* pm) {
+    struct message *m = pm->m;
+    struct pending_messages *pm2 = pm;
+    *pm = *pm->next;
+    free(pm2);
+    return m;
+}
+

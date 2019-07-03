@@ -22,7 +22,7 @@ unsigned leader_election(struct node* self, unsigned network_size) {
             // Old
             //MPI_Send(m, sizeof(*m), MPI_BYTE, next, 201, MPI_COMM_WORLD);
             // New_v2
-            while (!send_safe_message(m)) {
+            while (!send_safe_message(self, m)) {
 
                 debug("Send timed out", id);
                 // What if is was also m->id_o
@@ -48,7 +48,10 @@ unsigned leader_election(struct node* self, unsigned network_size) {
         // Old
         //MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, 201, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         // New
-        receive_safe_message(m);
+        if (self->pm != NULL && self->pm->m != NULL) {
+            waiting_specific_op(self, m, OP_OK);
+        }
+        //receive_safe_message(m);
 
         if (m->op == OP_OK)
             break; // Should be replaced by a OP_LEADER_OK

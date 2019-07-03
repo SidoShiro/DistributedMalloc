@@ -6,15 +6,15 @@
 #include <mpi.h>
 #include <stdio.h>
 
-int send_safe_message(struct message *m_send) {
+int send_safe_message(struct node* self, struct message *m_send) {
     MPI_Request r_send;
     int f_send = 0;
     MPI_Isend(m_send, sizeof(struct message), MPI_BYTE, m_send->id_t, 0, MPI_COMM_WORLD, &r_send);
 
-    struct message m_ok;
+    struct message* m_ok = malloc(sizeof(*m_ok));
     MPI_Request r_ok;
     int f_ok = 0;
-    MPI_Irecv(&m_ok, sizeof(struct message), MPI_BYTE, m_send->id_t, 0, MPI_COMM_WORLD, &r_ok);
+    MPI_Irecv(m_ok, sizeof(struct message), MPI_BYTE, m_send->id_t, 0, MPI_COMM_WORLD, &r_ok);
 
     struct timespec waiting_time;
     waiting_time.tv_sec = 0;
@@ -33,7 +33,14 @@ int send_safe_message(struct message *m_send) {
             if (f_ok) {
                 //printf("SUCCESS\n");
                 fflush(0);
-                return m_ok.op == OP_OK;
+                if (m_ok->op == OP_OK)
+                    return 1;
+                if (m_ok->is_a) {
+                    struct message *m_send = generate_message_a(m_ok->id_t, m_ok->id_s, 0, 0, 0, OP_OK, 0);
+                    MPI_Send(m_send, sizeof(struct message), MPI_BYTE, m_ok->id_s, 0, MPI_COMM_WORLD);
+                    free(m_send);
+                }
+                pending_messages_add(self->pm, m_ok);
             }
         }
         //printf("start sleep\n");
