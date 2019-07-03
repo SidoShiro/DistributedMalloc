@@ -7,8 +7,9 @@
 
 #include "leader_election.h"
 
-unsigned leader_election(unsigned id, unsigned network_size) {
+unsigned leader_election(struct node* self, unsigned network_size) {
 
+    unsigned id = self->id;
     unsigned new_leader = id;
     unsigned leader = id + 1;
     unsigned next = next_id(id, network_size);
@@ -17,11 +18,13 @@ unsigned leader_election(unsigned id, unsigned network_size) {
     while (1) {
         if (new_leader < leader) {
             leader = new_leader;
-            m = generate_message(id, next, leader, 0, 0, OP_LEADER);
+            m = generate_message_a(id, next, leader, 0, 0, OP_LEADER, 1);
             // Old
             //MPI_Send(m, sizeof(*m), MPI_BYTE, next, 201, MPI_COMM_WORLD);
             // New_v2
             while (!send_safe_message(m)) {
+
+                debug("Send timed out", id);
                 // What if is was also m->id_o
                 next = next_id(next, network_size);
                 if (m->id_t == m->id_o) { // On devait dire au prochain qu'il était le leader
@@ -54,14 +57,14 @@ unsigned leader_election(unsigned id, unsigned network_size) {
             new_leader = m->id_o;
             if (m->id_o == id) {
                 // send OK
-                m = generate_message(id, 666, leader, 0, 0, OP_OK);
+                m = generate_message_a(id, 666, leader, 0, 0, OP_OK, 0);
                 for (unsigned i = 1; i < network_size; ++i) {
                     MPI_Send(m, sizeof(*m), MPI_BYTE, i, 201, MPI_COMM_WORLD); // FIXME : broadcast, need to be safe ?
                 }
                 free(m);
 
                 // send leader to user
-                m = generate_message(id, 666, leader, 0, 0, OP_OK);
+                m = generate_message_a(id, 666, leader, 0, 0, OP_OK, 0);
                 MPI_Send(m, sizeof(*m), MPI_BYTE, 0, 201, MPI_COMM_WORLD);
                 free(m);
                 break;

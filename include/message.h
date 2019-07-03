@@ -26,6 +26,7 @@ struct message {
     size_t address;
     size_t size;
     enum operation op;
+    unsigned short is_a;
 };
 
 struct message *generate_message(unsigned short id_s,
@@ -34,5 +35,13 @@ struct message *generate_message(unsigned short id_s,
                                  size_t address,
                                  size_t size,
                                  enum operation op);
+
+struct message *generate_message_a(unsigned short id_s,
+                                 unsigned short id_t,
+                                 unsigned short id_o,
+                                 size_t address,
+                                 size_t size,
+                                 enum operation op,
+                                 unsigned short is_a);
 
 #endif /* !DISTRIBUTEDMALLOC_MESSAGE_H */

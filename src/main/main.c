@@ -41,13 +41,13 @@ int main(int argc, char **argv) {
     else
     {
         debug("Start Node", rank);
-    
-        unsigned leader = leader_election(rank, size);
-
-        printf("Node %u finished election. Leader is: %u\n", rank, leader);
       
         // Node Creation
         struct node *n = generate_node(rank, DEF_NODE_SIZE);
+
+        unsigned leader = leader_election(n, size);
+
+        printf("Node %u finished election. Leader is: %u\n", rank, leader);
         // Form rank number !
 
         // Start Leader !
