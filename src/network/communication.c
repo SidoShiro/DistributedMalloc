@@ -1,4 +1,6 @@
 #include "communication.h"
+#include "node.h"
+#include "pending_messages.h"
 
 #include <time.h>
 #include <mpi.h>
@@ -51,8 +53,28 @@ void receive_safe_message(struct message *m_recv) {
     MPI_Recv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     //printf("RECEIVE SUCCESS\n");
     fflush(0);
-    struct message *m_send = generate_message(m_recv->id_t, m_recv->id_s, 0, 0, 0, OP_OK);
+    struct message *m_send = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 0, 0, OP_OK, 0);
     MPI_Send(m_send, sizeof(struct message), MPI_BYTE, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
     free(m_send);
+    //printf("SEND SUCCESS\n");
+}
+
+void waiting_specific_op(struct node* self, struct message* m_recv, enum operation op) {
+    
+    while (1) {
+        MPI_Status status;
+        MPI_Recv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+        //printf("RECEIVE SUCCESS\n");
+        if (m_recv->is_a) {
+            struct message *m_send = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 0, 0, OP_OK, 0);
+            MPI_Send(m_send, sizeof(struct message), MPI_BYTE, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
+            free(m_send);
+        }
+        if (m_recv->op == op)
+            break;
+        else {
+            pending_messages_add(self->pm, m_recv);
+        }
+    }
     //printf("SEND SUCCESS\n");
 }

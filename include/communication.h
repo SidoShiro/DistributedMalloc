@@ -4,7 +4,7 @@
 #include "message.h"
 
 // Number of attempts failed before considering the node as dead.
-#define NB_ITER 6
+#define NB_ITER 8
 
 /*
  * Send the given message 'm' to the destination node

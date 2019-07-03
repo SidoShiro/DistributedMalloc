@@ -6,7 +6,7 @@
 
 struct pending_messages { // linked
     struct message *m;
-    struct pending_message* next;
+    struct pending_messages* next;
 };
 
 struct pending_messages* pending_messages_init(struct message* m, struct pending_messages* next);

@@ -16,6 +16,7 @@ set(SRCS
     src/network/block.c
     src/network/node.c
     src/utils/command_queue.c
+    src/utils/pending_messages.c
     src/graph/graph.c
     src/graph/map.c
     src/network/leader.c

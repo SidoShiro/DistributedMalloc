@@ -10,7 +10,7 @@ struct pending_messages* pending_messages_init(struct message* m, struct pending
 
 void pending_messages_add(struct pending_messages* pm, struct message* m) { // push_back
     if (!pm) {
-        pm->next = pending_messages_init(m, NULL);
+        pm = pending_messages_init(m, NULL);
         return;
     }
     while (pm->next)
