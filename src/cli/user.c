@@ -18,7 +18,6 @@ void send_write(void *data, unsigned short leader) {
     debug("Send Data For Write OP", 0);
     MPI_Isend(d_w->data, d_w->size, MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
     free(m);
-    free(data);
 }
 
 void send_malloc(void *data, unsigned short leader) {
@@ -43,7 +42,7 @@ void send_malloc(void *data, unsigned short leader) {
         debug(msg, DEF_NODE_USER);
     }
     free(m);
-    free(data);
+    free(buff);
 }
 
 void send_read(void *data, unsigned short leader) {
@@ -68,7 +67,6 @@ void send_read(void *data, unsigned short leader) {
         debug(msg, DEF_NODE_USER);
     }
     free(m);
-    free(data);
 }
 
 void send_command(enum operation op, void *data, unsigned short leader) {
