@@ -23,7 +23,7 @@ unsigned leader_election(struct node* self, unsigned network_size) {
             //MPI_Send(m, sizeof(*m), MPI_BYTE, next, 201, MPI_COMM_WORLD);
             // New_v2
             while (!send_safe_message(self, m)) {
-
+                
                 debug("Send timed out", id);
                 // What if is was also m->id_o
                 next = next_id(next, network_size);
@@ -38,8 +38,10 @@ unsigned leader_election(struct node* self, unsigned network_size) {
 
                 m->id_t = next;
             }
-            if (next == id)
+            if (next == id) {
+                debug("Proclaming himself leader cause too many time-out", self->id);
                 break;
+            }
             // EndNew
 
             free(m);
