@@ -9,8 +9,10 @@
 #include "block.h"
 
 struct leader_resources {
-    struct blocks *leader_blks;
+    struct block_register *leader_blks;
+    struct allocation_register  *leader_reg;
     struct command_queue *leader_command_queue;
+    // unsigned short id;
 };
 
 struct address_search {
