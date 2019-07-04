@@ -34,12 +34,20 @@ void send_malloc(void *data, unsigned short leader) {
     MPI_Request r2;
     void *buff = generate_message(0, 0, 0, 0, 0, OP_NONE);
     MPI_Irecv(buff, sizeof(struct message), MPI_BYTE, leader, 0, MPI_COMM_WORLD, &r2);
+    /*
     while (0 != MPI_Wait(&r, &st)) {
         char *msg = "Address from malloc operation of size ";
         char size_str[256];
         snprintf(size_str, sizeof(size_str), "%zu", d_s->size);
         strcat(msg, size_str);
         debug(msg, DEF_NODE_USER);
+    }
+    */
+    if (0 == MPI_Wait(&r2, &st)) {
+        struct message *m2 = buff;
+        printf("user: request malloc of size %zu, is at address %zu on the network\n",
+                m2->size,
+                m2->address);
     }
     free(m);
     free(buff);
