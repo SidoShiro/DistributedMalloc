@@ -37,7 +37,7 @@ struct block_register *init_nodes_same_size(unsigned short nb_nodes, size_t size
         blks->blks[i] = generate_block(i + 1, size, 0, v_address, 0);
         v_address += size;
     }
-    printf("Global init has memory size of %zu bytes", v_address);
+    printf("> /!\\ Global init has memory size of %zu bytes\n", v_address);
     return blks;
 }
 
