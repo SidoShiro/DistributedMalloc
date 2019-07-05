@@ -31,14 +31,16 @@ int check_block_for_alloc(size_t  *res_addr, struct block *b, size_t size, struc
         else if (size < b->size) {
             b->free = 1;
             b = split_block_u(b, size);
-            struct allocation *a = malloc(sizeof(struct allocation));
-            a->number_parts = 1;
-            a->v_address_start = b->virtual_address;
-            a->parts = malloc(a->number_parts * sizeof(struct allocation*));
-            a->parts[0] = b;
-            add_allocation(l_r->leader_reg, a);
-            *res_addr = b->virtual_address;
-            return 1;
+            if (b) {
+                struct allocation *a = malloc(sizeof(struct allocation));
+                a->number_parts = 1;
+                a->v_address_start = b->virtual_address;
+                a->parts = malloc(a->number_parts * sizeof(struct allocation *));
+                a->parts[0] = b;
+                add_allocation(l_r->leader_reg, a);
+                *res_addr = b->virtual_address;
+                return 1;
+            }
         }
         else {
 
@@ -71,7 +73,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
         if (1 == check_block_for_alloc(&address, b, size, l_r))
             return address;
     }
-    return 0;
+    return 999999999;
 }
 
 struct address_search *search_at_address(size_t address, struct leader_resources *l_r) {
