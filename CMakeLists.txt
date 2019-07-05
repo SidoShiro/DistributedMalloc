@@ -8,23 +8,23 @@ project(DistributedMalloc)
 find_package(MPI REQUIRED)
 
 # Vars with files for compilation
-set(SRCS 
-    src/utils/utils.c
-    src/cli/cli.c
-    src/network/message.c
-    src/network/block.c
-    src/network/node.c
-    src/utils/command_queue.c
-    src/graph/graph.c
-    src/graph/map.c
-    src/network/leader.c
-    src/network/leader_election.c
-    src/utils/debug.c
+set(SRCS
+        src/utils/utils.c
+        src/cli/cli.c
+        src/network/message.c
+        src/network/block.c
+        src/network/node.c
+        src/utils/command_queue.c
+        src/graph/graph.c
+        src/graph/map.c
+        src/network/leader.c
+        src/network/leader_election.c
+        src/utils/debug.c
         src/cli/user.c)
 
 set(MAIN src/main/main.c)
 
-set (TEST_MAIN test/main_test.c)
+set(TEST_MAIN test/main_test.c)
 
 
 include_directories("include/")
@@ -32,4 +32,5 @@ include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
 add_executable(dmalloc ${SRCS} ${MAIN} ${MPI_C_LIBRARIES})
 
-add_executable(test_dmalloc ${SRC} ${TEST_MAIN})
+include_directories("include/")
+add_executable(test_dmalloc ${SRCS} ${TEST_MAIN} ${MPI_C_LIBRARIES})
