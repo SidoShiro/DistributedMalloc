@@ -14,6 +14,7 @@
 enum test {
     BLOCK,
     BLOCKS,
+    BLOCK_REGISTER,
     ALLOCATION,
     LEADER,
     COMMAND_QUEUE,
@@ -29,13 +30,15 @@ int test_of(char *s, enum test t) {
     int nb_test = 0;
     switch (t) {
         case BLOCK:
-            nb_test = 4;
-            struct block *b = generate_block(1, 12, 0);
+            nb_test = 5;
+            struct block *b = generate_block(1, 12, 0, 0, 0);
             if (b->id == 1)
                 succ++;
             if (b->size == 12)
                 succ++;
-            if (b->address == 0)
+            if (b->node_address == 0)
+                succ++;
+            if (b->virtual_address == 0)
                 succ++;
             if (b->next == NULL)
                 succ++;
@@ -43,7 +46,7 @@ int test_of(char *s, enum test t) {
             break;
         case BLOCKS:
             nb_test = 5;
-            struct blocks *blks = generate_blocks(2);
+            struct block_register *blks = generate_blocks(2);
             if (blks->nb_blocks == 2)
                 succ++;
             else
@@ -55,8 +58,8 @@ int test_of(char *s, enum test t) {
                     printf("%sERRR: check fail: blks->blks[i] == NULL%s\n", r, f);
             }
 
-            struct block *b1 = generate_block(3, 36, 0);
-            struct block *b2 = generate_block(4, 36, 36);
+            struct block *b1 = generate_block(3, 36, 0, 0, 0);
+            struct block *b2 = generate_block(4, 36, 36, 0, 0);
             blks->blks[0] = b1;
             blks->blks[1] = b2;
 
@@ -65,6 +68,34 @@ int test_of(char *s, enum test t) {
                     succ++;
                 else
                     printf("%sERRR: check fail: blks->blks[i] != NULL%s\n", r, f);
+            }
+
+            printf("%s=== Tests %s : %d / %d SUCCEEDED =====%s\n\n", g, s, succ, nb_test, f);
+            break;
+        case BLOCK_REGISTER:
+            nb_test = 0;
+            struct block_register *b_r = init_nodes_same_size(2, 36);
+            nb_test++;
+            if (b_r)
+                succ++;
+            else
+                printf("%s>>> fail: b_r != NULL%s\n", r, f);
+            nb_test++;
+            if (b_r->nb_blocks == 2)
+                succ++;
+            else
+                printf("%s>>> fail: b_r != NULL%s\n", r, f);
+            for (size_t i = 0; i < b_r->nb_blocks; i++) {
+                nb_test++;
+                if (b_r->blks[i] != NULL)
+                    succ++;
+                else
+                    printf("%s>>> fail: b_r->blks[i] != NULL %s\n", r, f);
+                nb_test++;
+                if (b_r->blks[i]->size == 36)
+                    succ++;
+                else
+                    printf("%s>>> fail: b_r->blks[i]->size == 36  %s\n", r, f);
             }
 
             printf("%s=== Tests %s : %d / %d SUCCEEDED =====%s\n\n", g, s, succ, nb_test, f);
@@ -84,6 +115,8 @@ int test_of(char *s, enum test t) {
         case MESSAGE:
             printf("%s=== Tests %s : %d / %d SUCCEEDED =====%s\n\n", g, s, succ, nb_test, f);
             break;
+        default:
+            printf("%s>>> INFO : INVALID TEST REQUESTED %s\n", r, f);
     }
     return 1;
 }
@@ -95,12 +128,14 @@ int main(int argc, char **argv) {
     char *g = "\033[1;36m";
     (void) r;
     char *f = "\033[0m\0";
-    int nb_test = 2;
+    int nb_test = 3;
     int succ = 0;
     // BLOCK
     succ += test_of("Block", BLOCK);
 
     succ += test_of("Block", BLOCKS);
+
+    succ += test_of("Block", BLOCK_REGISTER);
 
     printf("%s===== %d / %d TESTS SUCCEEDED =====%s\n\n", g, succ, nb_test, f);
 }
