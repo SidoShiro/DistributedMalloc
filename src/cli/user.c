@@ -18,7 +18,6 @@ void send_write(void *data, unsigned short leader) {
     debug("Send Data For Write OP", 0);
     MPI_Isend(d_w->data, d_w->size, MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
     free(m);
-    free(data);
 }
 
 void send_malloc(void *data, unsigned short leader) {
@@ -35,6 +34,7 @@ void send_malloc(void *data, unsigned short leader) {
     MPI_Request r2;
     void *buff = generate_message(0, 0, 0, 0, 0, OP_NONE);
     MPI_Irecv(buff, sizeof(struct message), MPI_BYTE, leader, 0, MPI_COMM_WORLD, &r2);
+    /*
     while (0 != MPI_Wait(&r, &st)) {
         char *msg = "Address from malloc operation of size ";
         char size_str[256];
@@ -42,8 +42,15 @@ void send_malloc(void *data, unsigned short leader) {
         strcat(msg, size_str);
         debug(msg, DEF_NODE_USER);
     }
+    */
+    if (0 == MPI_Wait(&r2, &st)) {
+        struct message *m2 = buff;
+        printf("user: request malloc of size %zu, is at address %zu on the network\n",
+                m2->size,
+                m2->address);
+    }
     free(m);
-    free(data);
+    free(buff);
 }
 
 void send_read(void *data, unsigned short leader) {
@@ -68,7 +75,6 @@ void send_read(void *data, unsigned short leader) {
         debug(msg, DEF_NODE_USER);
     }
     free(m);
-    free(data);
 }
 
 void send_command(enum operation op, void *data, unsigned short leader) {

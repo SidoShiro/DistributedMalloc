@@ -38,6 +38,7 @@ void debug(char *msg, unsigned short id) {
     }
     unsigned short c = id % nb_vars;
     printf("%s%d: %s%s\n", colors[c], id, msg, reset);
+    fflush(0);
 }
 
 void debug_n(char *msg, unsigned short id, unsigned nb_bytes) {
@@ -64,4 +65,5 @@ void debug_n(char *msg, unsigned short id, unsigned nb_bytes) {
     msg[nb_bytes] = '\0';
     unsigned short c = id % nb_vars;
     printf("%s%d: %s%s\n", colors[c], id, msg, reset);
+    fflush(0);
 }

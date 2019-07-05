@@ -9,17 +9,20 @@
 #include "block.h"
 
 struct leader_resources {
-    struct blocks *leader_blks;
+    struct block_register *leader_blks;
+    struct allocation_register  *leader_reg;
     struct command_queue *leader_command_queue;
+    // unsigned short id;
 };
 
 struct address_search {
     unsigned short id;
-    size_t address_r;
-    size_t address;
+    size_t r_address;
+    size_t v_address;
+    size_t n_address;
     size_t size;
 };
 
-void leader_loop(struct node *n, unsigned short terminal_id);
+void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_nodes);
 
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */
