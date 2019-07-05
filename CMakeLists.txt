@@ -9,7 +9,6 @@ find_package(MPI REQUIRED)
 
 # Vars with files for compilation
 set(SRCS 
-    src/main/main.c
     src/utils/utils.c
     src/cli/cli.c
     src/network/message.c
@@ -23,9 +22,14 @@ set(SRCS
     src/utils/debug.c
         src/cli/user.c)
 
+set(MAIN src/main/main.c)
+
+set (TEST_MAIN test/main_test.c)
+
 
 include_directories("include/")
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
-add_executable(dmalloc ${SRCS} ${MPI_C_LIBRARIES})
+add_executable(dmalloc ${SRCS} ${MAIN} ${MPI_C_LIBRARIES})
 
+add_executable(test_dmalloc ${SRC} ${TEST_MAIN})
