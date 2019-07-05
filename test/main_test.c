@@ -118,7 +118,7 @@ int test_of(char *s, enum test t) {
         default:
             printf("%s>>> INFO : INVALID TEST REQUESTED %s\n", r, f);
     }
-    return 1;
+    return succ == nb_test ? 1 : 0;
 }
 
 int main(int argc, char **argv) {
