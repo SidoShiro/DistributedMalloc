@@ -1,3 +1,5 @@
+#include <communication.h>
+#include <queue.h>
 #include "cli.h"
 #include "graph.h"
 #include "utils.h"
@@ -7,50 +9,68 @@
 #include "leader_election.h"
 
 unsigned leader_election(unsigned id, unsigned network_size) {
-
     unsigned new_leader = id;
     unsigned leader = id + 1;
     unsigned next = next_id(id, network_size);
-    struct message *m = NULL;
+    struct queue *message_queue = queue_init();
 
     while (1) {
         if (new_leader < leader) {
+            printf("%u changed its leader from %u to %u\n", id, leader, new_leader);
             leader = new_leader;
-            m = generate_message(id, next, leader, 0, 0, OP_LEADER);
-            MPI_Send(m, sizeof(*m), MPI_BYTE, next, 201, MPI_COMM_WORLD);
-            free(m);
+            struct message *m_send = generate_message_a(id, next, leader, 0, 0, OP_LEADER, 1);
+            while (!send_safe_message(m_send, message_queue)) {
+                debug("timeout", id);
+                if (next == leader) {
+                    debug("leader is dead", id);
+                    return 0;
+                }
+                next = next_id(next, network_size);
+                if (next == id) {
+                    debug("i'm alone", id);
+                    return 0;
+                }
+                m_send->id_t = next;
+            }
+            free(m_send);
+        }
+        debug("safe message sent", id);
+
+        struct message *m_receive = queue_pop(message_queue);
+        if (!m_receive) {
+            debug("queue_empty", id);
+            m_receive = calloc(1, sizeof(struct message));
+            receive_message(m_receive);
+        } else {
+            debug("queue not empty", id);
         }
 
-        MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, 201, MPI_COMM_WORLD,
-            MPI_STATUS_IGNORE);
+        if (m_receive->op == OP_LEADER_OK)
+            return leader;
 
-        if (m->op == OP_OK)
-            break; // Should be replaced by a OP_LEADER_OK
-
-        if (m->op == OP_LEADER) {
-            new_leader = m->id_o;
-            if (m->id_o == id) {
-                // send OK
-                m = generate_message(id, 666, leader, 0, 0, OP_OK);
+        if (m_receive->op == OP_LEADER) {
+            new_leader = m_receive->id_o;
+            if (m_receive->id_o == id) {
+                // send LEADER OK
                 for (unsigned i = 1; i < network_size; ++i) {
-                    MPI_Send(m, sizeof(*m), MPI_BYTE, i, 201, MPI_COMM_WORLD);
+                    struct message *m_ok = generate_message(id, i, leader, 0, 0, OP_LEADER_OK);
+                    MPI_Send(m_ok, sizeof(*m_ok), MPI_BYTE, i, 201, MPI_COMM_WORLD);
+                    free(m_ok);
                 }
-                free(m);
 
                 // send leader to user
-                m = generate_message(id, 666, leader, 0, 0, OP_OK);
-                MPI_Send(m, sizeof(*m), MPI_BYTE, 0, 201, MPI_COMM_WORLD);
-                free(m);
-                break;
+                struct message *m_user = generate_message(id, 0, leader, 0, 0, OP_OK);
+                MPI_Send(m_user, sizeof(*m_user), MPI_BYTE, 0, 201, MPI_COMM_WORLD);
+                free(m_user);
+                return leader;
             }
         }
     }
-    return leader;
 }
 
 
 unsigned next_id(unsigned id, unsigned modulo) {
-    unsigned res = (id  + 1) % modulo;
+    unsigned res = (id + 1) % modulo;
     if (res == 0)
         res = 1;
     return res;
