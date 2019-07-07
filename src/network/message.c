@@ -1,3 +1,4 @@
+#include <err.h>
 #include "message.h"
 
 struct message *generate_message(unsigned short id_s,
@@ -6,7 +7,11 @@ struct message *generate_message(unsigned short id_s,
                                  size_t address,
                                  size_t size,
                                  enum operation op) {
-    struct message *m = malloc(sizeof(struct message));
+    struct message *m = malloc(64 + sizeof(struct message));
+    if (!m) {
+        warnx("WARNING: MALLOC FAIL!!!!");
+        return NULL;
+    }
     m->op = op;
     m->address = address;
     m->id_o = id_o;

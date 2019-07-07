@@ -3,14 +3,14 @@
 
 struct block_register *generate_blocks(size_t nb_blks) {
     struct block_register *blks = malloc(sizeof(struct block_register));
-    blks->blks = malloc(nb_blks * sizeof(struct block *));
+    blks->blks = malloc((34 + nb_blks) * sizeof(struct block *));
     blks->nb_blocks = nb_blks;
     return blks;
 }
 
 struct block *generate_block(unsigned short id, size_t size, size_t node_address,
                              size_t virtual_address, char free) {
-    struct block *blk = malloc(sizeof(struct block));
+    struct block *blk = malloc(64 + sizeof(struct block));
     blk->id = id;
     blk->size = size;
     blk->node_address = node_address;
@@ -37,17 +37,18 @@ struct block_register *init_nodes_same_size(unsigned short nb_nodes, size_t size
         blks->blks[i] = generate_block(i + 1, size, 0, v_address, 0);
         v_address += size;
     }
-    printf("Global init has memory size of %zu bytes", v_address);
+    printf("> /!\\ Global init has memory size of %zu bytes\n", v_address);
     return blks;
 }
 
 struct block *split_block_u(struct block *b, size_t size) {
     if (!b) {
         printf("FATAL ALLOCATION ERROR\n");
+        return NULL;
     }
-    if (b->size < size) {
+    if (b->size > size) {
+        size_t su = b->size - size;
         b->size = size;
-        size_t su = size - b->size;
         struct block *b_next = b->next;
         add_block(b, b->id, su, b->node_address + size, b->virtual_address + size, 0);
         b->next->next = b_next;
