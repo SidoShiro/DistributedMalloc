@@ -6,7 +6,7 @@
 #include "queue.h"
 
 // Number of attempts failed before considering the node as dead.
-#define NB_ITER 200
+#define NB_ITER 60
 
 /*
  * Send the given message 'm' to the destination node

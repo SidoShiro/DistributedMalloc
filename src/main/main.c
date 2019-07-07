@@ -43,25 +43,31 @@ int main(int argc, char **argv) {
     {
         debug("Start Node", rank);
     
-        unsigned leader = leader_election(rank, size);
+        if (rank != 1) {
 
-        printf("Node %u finished election. Leader is: %u\n", rank, leader);
-      
-        // Node Creation
-        struct node *n = generate_node(rank, DEF_NODE_SIZE);
-        // Form rank number !
 
-        // Start Leader !
-        if (n->id == leader) {
-            n->isleader = 1;
-            leader_loop(n, DEF_NODE_USER);
+            unsigned leader = leader_election(rank, size);
+
+            printf("Node %u finished election. Leader is: %u\n", rank, leader);
+        
+            // Node Creation
+            struct node *n = generate_node(rank, DEF_NODE_SIZE);
+            // Form rank number !
+
+
+        
+            // Start Leader !
+            if (n->id == leader) {
+                n->isleader = 1;
+                leader_loop(n, DEF_NODE_USER);
+            }
+
+            /*
+            while (1) {
+                // routine
+            }
+            */
         }
-
-        /*
-        while (1) {
-            // routine
-        }
-        */
 
     }
 

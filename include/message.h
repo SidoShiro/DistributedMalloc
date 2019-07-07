@@ -18,7 +18,8 @@ enum operation {
     OP_NONE,
     OP_DUMP,
     OP_LEADER_OK,
-    OP_ALIVE
+    OP_ALIVE,
+    OP_LEADER_AGAIN
 };
 
 struct message {

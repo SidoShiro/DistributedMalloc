@@ -21,6 +21,12 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
 
     for (int i = 0; i < NB_ITER; i++) {
         MPI_Test(&r_ok, &f_ok, MPI_STATUS_IGNORE);
+        if (m_send->id_s == 24) { // TODO : REMOVE DEBUG
+            printf("== %u / %u: still nothing. (%u)\n", i, NB_ITER, f_ok);
+            if (i == 20 && m_send->id_t == 2) {
+                printf("%u: msg from %u to %u with op %u\n", m_send->id_s, m_recv->id_s, m_recv->id_t, m_recv->op);
+            }
+        } // End
         if (f_ok) {
             debug("receive_something", m_recv->id_t);
             if (m_recv->op == OP_ALIVE) {
@@ -48,7 +54,9 @@ void receive_message(struct message *m_recv) {
     if (m_recv->need_callback) {
         debug("need callback", m_recv->id_t);
         struct message *m_send = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 0, 0, OP_ALIVE, 0);
-        MPI_Send(m_send, sizeof(struct message), MPI_BYTE, status.MPI_SOURCE, 201, MPI_COMM_WORLD);
+        int ret = MPI_Send(m_send, sizeof(struct message), MPI_BYTE, status.MPI_SOURCE, 201, MPI_COMM_WORLD);
+        printf("%u respond to %u %u with a OP_ALIVE __ %d\n", m_recv->id_t, status.MPI_SOURCE, m_recv->id_s, ret);
+
         free(m_send);
     }
 }
