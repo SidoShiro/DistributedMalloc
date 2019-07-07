@@ -7,8 +7,11 @@
 #include <stdlib.h>
 #include <err.h>
 
+#include "message.h"
 #include "utils.h"
 
 void start_cli();
+
+void send_command(enum operation op, void *data, unsigned short leader);
 
 #endif /* !DISTRIBUTEDMALLOC_CLI_H */

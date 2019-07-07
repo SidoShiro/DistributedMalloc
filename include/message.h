@@ -4,15 +4,19 @@
 #include <stdlib.h>
 
 enum operation {
-    OK = 0,
-    WRITE,
-    READ,
-    SNAP,
-    LEADER,
-    WHOISLEADER,
-    REVIVE,
-    DIE,
-    TEST
+    OP_OK = 0,
+    OP_MALLOC,
+    OP_FREE,
+    OP_WRITE,
+    OP_READ,
+    OP_SNAP,
+    OP_LEADER,
+    OP_WHOISLEADER,
+    OP_REVIVE,
+    OP_KILL,
+    OP_TEST,
+    OP_NONE,
+    OP_DUMP
 };
 
 struct message {

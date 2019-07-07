@@ -1,4 +1,8 @@
 #include <stdio.h>
+#include <command_queue.h>
+#include <mpi.h>
+#include <globals.h>
+#include <debug.h>
 #include "cli.h"
 
 char *read_cmd() {
@@ -67,7 +71,7 @@ void error_msg(char *msg) {
     warnx("%s\n", msg);
 }
 
-void execute(char **args) {
+void execute(char **args, unsigned short leader) {
     size_t l = len(args);
     if (l == 0)
         return;
@@ -100,6 +104,9 @@ void execute(char **args) {
         size_t size = 0;
         if (1 == sscanf(args[1], "%zu", &size)) {
             printf("Execute DMALLOC of %zu\n", size);
+            struct data_size *d_s = generate_data_size(size);
+            send_command(OP_MALLOC, d_s, leader);
+            free(d_s);
         } else {
             error_msg("m  require an argument 'size' which can be casted as a positive integer");
         }
@@ -136,6 +143,9 @@ void execute(char **args) {
         if (1 == sscanf(args[1], "%zu", &address)) {
             if (1 == sscanf(args[2], "%zu", &datasize)) {
                 printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
+                struct data_write *d_w = generate_data_write(address, datasize, args[3]);
+                send_command(OP_WRITE, d_w, leader);
+                free(d_w);
             } else {
                 error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
             }
@@ -158,6 +168,9 @@ void execute(char **args) {
         if (1 == sscanf(args[1], "%zu", &address)) {
             if (1 == sscanf(args[2], "%zu", &datasize)) {
                 printf("Execute Read at %zu, %zu bytes\n", address, datasize);
+                struct data_read *d_r = generate_data_read(address, datasize);
+                send_command(OP_READ, d_r, leader);
+                free(d_r);
             } else {
                 error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
             }
@@ -262,18 +275,27 @@ void execute(char **args) {
 
 }
 
+unsigned short get_leader() {
+    struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
+    MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, 201, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    debug("Got Leader !", DEF_NODE_USER);
+    return m->id_o;
+}
+
 void start_cli() {
     int no_quit = 1;
     char *cmd;
     char **args;
 
+    unsigned short leader = get_leader();
+
     while (no_quit) {
+        fflush(0);
         printf("dmalloc $ ");
         fflush(0);
         cmd = read_cmd();
 
         // DEBUG printf("%s\n", cmd);
-
         args = split_cmd(cmd);
         if (args && args[0] && 0 == strcmp(args[0], "exit")) {
             no_quit = 0;
@@ -282,7 +304,7 @@ void start_cli() {
 
         // DEBUG print_args(args);
 
-        execute(args);
+        execute(args, leader);
 
         free(cmd);
         free(args);

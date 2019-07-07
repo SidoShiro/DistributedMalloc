@@ -22,6 +22,9 @@ make
 mpirun --hostfile hostfile dmalloc [DOTFILE]
 ```
 
+The *run.sh* script execute **mpirun** on build/dmalloc, takes 1 argument for number of nodes,
+default is 20.
+
 
 # Tooltips
 

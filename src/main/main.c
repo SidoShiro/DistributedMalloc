@@ -1,6 +1,11 @@
 #include "cli.h"
 #include "graph.h"
 #include "utils.h"
+#include "node.h"
+#include "leader.h"
+#include "globals.h"
+#include "debug.h"
+#include "leader_election.h"
 
 #include <mpi.h>
 #include <stdio.h>
@@ -11,8 +16,8 @@ int main(int argc, char **argv) {
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
 
     // Load Graph Here
-    struct adjacency_matrix *a = dot_reader("../simplegraph.dot");
-    free_adjacency_matrix(a);
+    //struct adjacency_matrix *a = dot_reader("../simplegraph.dot");
+    //free_adjacency_matrix(a);
 
     // Generate Adjacency Matrix Here
     void *adj_mat_network = NULL;
@@ -28,29 +33,34 @@ int main(int argc, char **argv) {
     // TODO: Parse and Work on bin arguments
 
     // Start CLI
-    if (rank == 0) {
+    if (rank == DEF_NODE_USER) {
         printf("starting %d processes\n", size);
+        debug("Start User", DEF_NODE_USER);
         start_cli();
     }
     else
     {
-        // TODO: Je sais pas je suis senser faire quoi
+        debug("Start Node", rank);
+    
+        unsigned leader = leader_election(rank, size);
 
+        printf("Node %u finished election. Leader is: %u\n", rank, leader);
+      
         // Node Creation
+        struct node *n = generate_node(rank, DEF_NODE_SIZE);
         // Form rank number !
 
         // Start Leader !
+        if (n->id == leader) {
+            n->isleader = 1;
+            leader_loop(n, DEF_NODE_USER, size - 1);
+        }
 
-
-        // Wait Leader
-
-        // If is leader
-
-
-
-        // else
-
-
+        /*
+        while (1) {
+            // routine
+        }
+        */
 
     }
 
