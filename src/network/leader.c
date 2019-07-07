@@ -5,7 +5,10 @@
 #include "debug.h"
 #include "utils.h"
 
+#include <sys/types.h>
+#include <unistd.h>
 #include <mpi.h>
+#include <stdint.h>
 
 size_t get_message_size() {
     return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
@@ -75,10 +78,10 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
             if (0 == b->free) {
                 if (size == b->size) {
                     b->free = 1;
-                    struct allocation *a = malloc(sizeof(struct allocation));
+                    struct allocation *a = malloc(32 + sizeof(struct allocation));
                     a->number_parts = 1;
                     a->v_address_start = b->virtual_address;
-                    a->parts = malloc(a->number_parts * sizeof(struct allocation *));
+                    a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
                     a->parts[0] = b;
                     add_allocation(l_r->leader_reg, a);
                     return b->virtual_address;
@@ -102,10 +105,34 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
         }
     }
     // Multi - Parts
+    struct allocation *a = malloc(32 + sizeof(struct allocation));
+    a->number_parts = 0;
+    a->parts = NULL;
+    a->v_address_start = SIZE_MAX;
+    ssize_t m_size = size;
     for (size_t i = 0; i < blks->nb_blocks; i++) {
-        
+        struct block *b = blks->blks[i];
+        while (b && m_size > 0) {
+            if (b->free == 0) {
+                b->free = 1;
+                m_size -= b->size;
+                if (m_size < 0) {
+                    b = split_block_u(b, -1 * m_size);
+                }
+                if (a->v_address_start == SIZE_MAX)
+                    a->v_address_start = b->virtual_address;
+                a->number_parts++;
+                a->parts = realloc(a->parts, 34 + (a->number_parts * sizeof(struct allocation *)));
+                a->parts[a->number_parts - 1] = b;
+            }
+            b = b->next;
+        }
+        if (m_size <= 0) {
+            add_allocation(l_r->leader_reg, a);
+            return a->v_address_start;
+        }
     }
-    return 999999999;
+    return SIZE_MAX;
 }
 
 struct address_search *search_at_address(size_t address, struct leader_resources *l_r) {
