@@ -287,7 +287,7 @@ void execute_command(struct node *n, struct leader_resources *l_r) {
             default:
                 break;
         }
-        pop_command(l_r->leader_command_queue);
+        l_r->leader_command_queue = pop_command(l_r->leader_command_queue);
     }
 }
 
