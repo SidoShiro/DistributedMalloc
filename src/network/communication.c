@@ -34,7 +34,7 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
         if (f_ok) {
             //debug("receive_something", m_recv->id_t);
             printf("%u receive from %u, op = %u, leader = %u\n", m_recv->id_t, m_recv->id_s, m_recv->op, m_recv->id_o);
-            if (m_recv->op == OP_ALIVE) {
+            if (m_recv->op == OP_ALIVE && m_recv->id_s == m_send->id_t) {
                 free(m_recv); // free the last m_recv message which is not in queue
                 return 1;
             }
@@ -68,10 +68,10 @@ struct message *receive_message(struct queue *message_queue) {
     debug("queue empty, receive message", m_recv->id_t);
     if (m_recv->need_callback) {
         debug("need callback", m_recv->id_t);
-        struct message *m_send = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 2048, 0, OP_ALIVE, 0);
-        int ret = MPI_Send(m_send, sizeof(struct message), MPI_BYTE, status.MPI_SOURCE, 201, MPI_COMM_WORLD);
-        printf("%u respond to %u %u with a %u __ %d\n", m_send->id_s, status.MPI_SOURCE, m_send->id_t, m_send->op, ret);
-        free(m_send);
+        struct message *m_alive = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 0, 0, OP_ALIVE, 0);
+        int ret = MPI_Send(m_alive, sizeof(struct message), MPI_BYTE, m_recv->id_s, 201, MPI_COMM_WORLD);
+        printf("%u respond to %u %u with a %u __ %d\n", m_alive->id_s, status.MPI_SOURCE, m_alive->id_t, m_alive->op, ret);
+        free(m_alive);
     }
     return m_recv;
 }

@@ -39,7 +39,7 @@ unsigned leader_election(unsigned id, unsigned network_size) {
                     return 0;
                 }
                 m_send->id_t = next;
-                printf("%u changed target to %u", id, next);
+                printf("%u changed target to %u\n", id, next);
             }
             free(m_send);
         }
