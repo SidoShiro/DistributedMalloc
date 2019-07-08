@@ -9,6 +9,7 @@
 
 #include <mpi.h>
 #include <stdio.h>
+#include <queue.h>
 
 int main(int argc, char **argv) {
     // Initialize MPI
@@ -42,25 +43,30 @@ int main(int argc, char **argv) {
     {
         debug("Start Node", rank);
     
-        unsigned leader = leader_election(rank, size);
+        //if (rank != 1) {
 
-        printf("Node %u finished election. Leader is: %u\n", rank, leader);
-      
-        // Node Creation
-        struct node *n = generate_node(rank, DEF_NODE_SIZE);
-        // Form rank number !
+            unsigned leader = leader_election(rank, size);
 
-        // Start Leader !
-        if (n->id == leader) {
-            n->isleader = 1;
-            leader_loop(n, DEF_NODE_USER, size - 1);
-        }
+            printf("Node %u finished election. Leader is: %u\n", rank, leader);
+        
+            // Node Creation
+            struct node *n = generate_node(rank, DEF_NODE_SIZE);
+            // Form rank number !
 
-        /*
-        while (1) {
-            // routine
-        }
-        */
+
+        
+            // Start Leader !
+            if (n->id == leader) {
+                n->isleader = 1;
+                leader_loop(n, DEF_NODE_USER, size - 1);
+            }
+
+            /*
+            while (1) {
+                // routine
+            }
+            */
+        //}
 
     }
 
