@@ -45,7 +45,6 @@ int main(int argc, char **argv) {
     
         //if (rank != 1) {
 
-
             unsigned leader = leader_election(rank, size);
 
             printf("Node %u finished election. Leader is: %u\n", rank, leader);
@@ -59,7 +58,7 @@ int main(int argc, char **argv) {
             // Start Leader !
             if (n->id == leader) {
                 n->isleader = 1;
-                leader_loop(n, DEF_NODE_USER);
+                leader_loop(n, DEF_NODE_USER, size - 1);
             }
 
             /*
