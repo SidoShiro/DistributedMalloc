@@ -193,6 +193,29 @@ int test_of(char *s, enum test t) {
 
 
             break;
+        case COMMAND_QUEUE:
+            nb_test = 0;
+
+            struct command_queue *q1 = generate_command_queue(OP_MALLOC, NULL);
+            struct command_queue *qq = push_command(NULL, q1);
+
+
+
+            nb_test++;
+            if (qq->command == OP_MALLOC)
+                succ++;
+
+            nb_test++;
+            if (qq->next == NULL)
+                succ++;
+
+            qq = pop_command(qq);
+
+            nb_test++;
+            if (qq == NULL)
+                succ++;
+
+            break;
         default:
             printf("%s>>> INFO : INVALID TEST REQUESTED %s\n", r, f);
             return 0;
@@ -233,6 +256,9 @@ int main(int argc, char **argv) {
     nb_test++;
     succ += test_of("Split Block", SPLIT_BLOCK);
 
+    nb_test++;
+    succ += test_of("COMMAND_QUEUE", COMMAND_QUEUE);
 
     printf("%s===== %d / %d TESTS SUCCEEDED =====%s\n\n", g, succ, nb_test, f);
+    return succ == nb_test;
 }
