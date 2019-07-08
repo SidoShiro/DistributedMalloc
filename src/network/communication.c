@@ -27,10 +27,9 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
         MPI_Test(&r_ok, &f_ok, MPI_STATUS_IGNORE);
         if (i == 20) {
             //printf("%u: msg from %u to %u with op %u\n", m_send->id_s, m_recv->id_s, m_recv->id_t, m_recv->op);
-            // TODO find another solution
             printf("CURR LEADER: %u\n", m_send->id_o);
-            //if (m_send->op == OP_ALIVE)
-            //    MPI_Send(m_send, sizeof(struct message), MPI_BYTE, m_send->id_t, 201, MPI_COMM_WORLD);
+            // TODO find another solution
+            // MPI_Send(m_send, sizeof(struct message), MPI_BYTE, m_send->id_t, 201, MPI_COMM_WORLD);
         }
         if (f_ok) {
             //debug("receive_something", m_recv->id_t);
@@ -56,19 +55,23 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
     return 0;
 }
 
-void receive_message(struct message *m_recv) {
+struct message *receive_message(struct queue *message_queue) {
+    struct message *m_recv = queue_pop(message_queue);
+    if (m_recv) {
+        debug("queue not empty", m_recv->id_t);
+        return m_recv;
+    }
+    m_recv = calloc(1, sizeof(struct message));
     MPI_Status status;
     // What if m_recv->op = OP_ALIVE ?
     MPI_Recv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-    debug("receive message C'EST MARK QUI DEMANDE", m_recv->id_t);
+    debug("queue empty, receive message", m_recv->id_t);
     if (m_recv->need_callback) {
         debug("need callback", m_recv->id_t);
         struct message *m_send = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 2048, 0, OP_ALIVE, 0);
         int ret = MPI_Send(m_send, sizeof(struct message), MPI_BYTE, status.MPI_SOURCE, 201, MPI_COMM_WORLD);
         printf("%u respond to %u %u with a %u __ %d\n", m_send->id_s, status.MPI_SOURCE, m_send->id_t, m_send->op, ret);
-
         free(m_send);
-
-
     }
+    return m_recv;
 }

@@ -45,14 +45,7 @@ unsigned leader_election(unsigned id, unsigned network_size) {
         }
         //debug("safe message sent", id);
 
-        struct message *m_receive = queue_pop(message_queue);
-        if (!m_receive) {
-            debug("queue_empty", id);
-            m_receive = calloc(1, sizeof(struct message));
-            receive_message(m_receive);
-        } else {
-            debug("queue not empty", id);
-        }
+        struct message *m_receive = receive_message(message_queue);
 
         if (m_receive->op == OP_LEADER_OK)
             return leader;

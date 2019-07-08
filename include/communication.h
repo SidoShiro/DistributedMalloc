@@ -18,6 +18,6 @@ int send_safe_message(struct message *m_send, struct queue *queue);
  * Receive a message sent with 'send_safe_message'
  * then send a OP_OK to the source node
  */
-void receive_message(struct message *m_recv);
+struct message *receive_message(struct queue *message_queue);
 
 #endif /* !DISTRIBUTEDMALLOC_COMMUNICATION_H */
