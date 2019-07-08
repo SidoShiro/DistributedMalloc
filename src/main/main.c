@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     {
         debug("Start Node", rank);
     
-        if (rank != 1) {
+        //if (rank != 1) {
 
 
             unsigned leader = leader_election(rank, size);
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
                 // routine
             }
             */
-        }
+        //}
 
     }
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_C_COMPILER "mpicc")
-set(CMAKE_C_FLAGS "-O3 -std=c11 -Werror -Wall -Wextra -pedantic")
+set(CMAKE_C_FLAGS "-O3 -std=c11 -Werror -Wall -Wextra -pedantic -fsanitize=address")
 
 project(DistributedMalloc)
 

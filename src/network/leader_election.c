@@ -19,11 +19,14 @@ unsigned leader_election(unsigned id, unsigned network_size) {
             printf("%u changed its leader from %u to %u\n", id, leader, new_leader);
             leader = new_leader;
             struct message *m_send = generate_message_a(id, next, leader, 0, 0, OP_LEADER, 1);
+            printf("id:%u next:%u leader:%u op:%u\n", m_send->id_s, m_send->id_t, m_send->id_o, m_send->op);
             while (!send_safe_message(m_send, message_queue)) {
                 debug("TIMEOUT", id);
                 if (next == leader) {
                     debug("LEADER IS DEAD, STARTING AGAIN", id);
                     for (unsigned i = 1; i < network_size; ++i) {
+                        printf("ZAEFAEZFAZEFAZEF\n");
+                        fflush(0);
                         struct message *m_again = generate_message(id, i, leader, 0, 0, OP_LEADER_AGAIN);
                         MPI_Send(m_again, sizeof(*m_again), MPI_BYTE, i, 201, MPI_COMM_WORLD);
                         free(m_again);
@@ -79,8 +82,8 @@ unsigned leader_election(unsigned id, unsigned network_size) {
 
 
 unsigned next_id(unsigned id, unsigned modulo) {
-    unsigned res = (id + 1) % modulo;
+    unsigned res = (id - 1) % modulo;
     if (res == 0)
-        res = 1;
+        res = modulo - 1;
     return res;
 }
