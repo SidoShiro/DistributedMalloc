@@ -24,50 +24,56 @@ void write_on_node(struct node *n, size_t address, char *data, size_t size) {
 }
 
 void node_cycle(struct node *n) {
-    // cycle of node
-    struct message m;
-    receive_message(&m);
+    while (1) {
+        // cycle of node
+        struct queue *q = queue_init();
+        struct message *m;
+        m = receive_message(q);
 
-    switch (m.op) {
-        case OP_OK:
-            break;
-        case OP_MALLOC:
-            break;
-        case OP_FREE:
-            break;
-        case OP_WRITE: {
-            size_t addr = m.address;
-            size_t size = m.size;
-            char *data = malloc(size * sizeof(char));
-            MPI_Status st;
-            MPI_Recv(data, size, MPI_BYTE, m.id_s, 4, MPI_COMM_WORLD, &st);
-            write_on_node(n, addr, data, size);
-            free(data);
+        switch (m->op) {
+            case OP_OK:
+                break;
+            case OP_MALLOC:
+                break;
+            case OP_FREE:
+                break;
+            case OP_WRITE: {
+                size_t addr = m->address;
+                size_t size = m->size;
+                char *data = malloc(size * sizeof(char));
+                MPI_Status st;
+                MPI_Recv(data, size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD, &st);
+                write_on_node(n, addr, data, size);
+                free(data);
+            }
+                break;
+            case OP_READ:
+                break;
+            case OP_SNAP:
+                break;
+            case OP_LEADER:
+                break;
+            case OP_WHOISLEADER:
+                break;
+            case OP_REVIVE:
+                break;
+            case OP_KILL:
+                break;
+            case OP_TEST:
+                break;
+            case OP_NONE:
+                break;
+            case OP_DUMP:
+                break;
+            case OP_LEADER_OK:
+                break;
+            case OP_ALIVE:
+                break;
+            case OP_LEADER_AGAIN:
+                break;
         }
+        if (m->op == OP_KILL)
             break;
-        case OP_READ:
-            break;
-        case OP_SNAP:
-            break;
-        case OP_LEADER:
-            break;
-        case OP_WHOISLEADER:
-            break;
-        case OP_REVIVE:
-            break;
-        case OP_KILL:
-            break;
-        case OP_TEST:
-            break;
-        case OP_NONE:
-            break;
-        case OP_DUMP:
-            break;
-        case OP_LEADER_OK:
-            break;
-        case OP_ALIVE:
-            break;
-        case OP_LEADER_AGAIN:
-            break;
+        free(m);
     }
 }
