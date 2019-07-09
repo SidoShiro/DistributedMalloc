@@ -49,11 +49,14 @@ default is 20.
 * **Message**
   * id_s (source)
   * id_t (target)
-  * id_o (final target for operation)
+  * id_o (final target for operation or additional information)
+  * need_callback (does this message require an ALIVE callback)
   * size
   * address
   * enum *Op*
     * OK
+    * MALLOC
+    * FREE
     * WRITE
     * READ
     * SNAP
@@ -62,6 +65,11 @@ default is 20.
     * (REVIVE)
     * (DIE)
     * (TEST)
+    * NONE
+    * DUMP
+    * LEADER_OK (leader election is over + a success)
+    * ALIVE (callback, proving its aliveness)
+    * LEADER_AGAIN (supposed leader is dead, need to retart the election)
 * **Block**
   * Linked list of:
     * address

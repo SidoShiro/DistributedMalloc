@@ -42,14 +42,20 @@ char *read_cmd() {
 char **split_cmd(char *cmd) {
     char **tokens = NULL;
     char *token;
+    int w = 0;
     ssize_t nb_tok = 1;
     token = strtok(cmd, " ");
+    if (token && 0 == strcmp(token, "w"))
+        w++;
     /* walk through other tokens */
     while (token != NULL) {
         tokens = realloc(tokens, nb_tok * sizeof(char *));
         tokens[nb_tok - 1] = token;
         nb_tok++;
-        token = strtok(NULL, " ");
+        if (nb_tok == 4 && w == 1)
+            token = strtok(NULL, "\0");
+        else
+            token = strtok(NULL, " ");
     }
     tokens = realloc(tokens, nb_tok * sizeof(char *));
     tokens[nb_tok - 1] = NULL;
@@ -83,6 +89,7 @@ void execute(char **args, unsigned short leader) {
                " w `address` `datasize` `data` | write at the address the data of size datasize          |\n"
                " r `address` `datasize`        | read datasize bytes at address                          |\n"
                " d `address`                   | dump in as text all data of the block stored in address |\n"
+               " d net                         | dump all allocation                                     |\n"
                " d `address` `file`            | dump address data in file                               |\n"
                " snap                          | give user a snap of the network (print)                 |\n"
                " snap `file`                   | same as snap but stored in file                         |\n"
@@ -180,7 +187,7 @@ void execute(char **args, unsigned short leader) {
     } else if (0 == strcmp(args[0], "d")) {
         // ERRORS
         if (l <= 1) {
-            error_msg("d requires minimum 1 argument and maximum 2 : 'address' and 'file'");
+            error_msg("d requires minimum 1 argument and maximum 2 : 'address' | 'net and 'file'");
             return;
         } else if (l >= 4) {
             error_msg("d do not support more than 2 arguments, check command h");
@@ -189,12 +196,17 @@ void execute(char **args, unsigned short leader) {
 
         // Execution
         size_t address = 0;
-        if (1 == sscanf(args[1], "%zu", &address)) {
+        if (0 == strcmp(args[1], "net")) {
+            printf("Execute DUMP_ALL");
+            send_command(OP_DUMP_ALL, NULL, leader);
+        } else if (1 == sscanf(args[1], "%zu", &address)) {
 
             // d address
             if (l == 2) {
                 printf("Execute Dump of %zu\n", address);
-
+                struct data_address *d_a = generate_data_address(address);
+                send_command(OP_DUMP, d_a, leader);
+                free(d_a);
             }
 
             // d address file
