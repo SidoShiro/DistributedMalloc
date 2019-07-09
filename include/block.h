@@ -52,8 +52,6 @@ add_block(struct block *blk, unsigned short id, size_t size, size_t node_address
 
 void merge_free_block(struct block_register *blks);
 
-struct block_register *init_nodes_same_size(unsigned short nb_nodes, size_t size);
-
 /**
  * Splited half 2 is free = 0
  * @param b
