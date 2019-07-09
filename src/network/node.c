@@ -32,6 +32,23 @@ void write_on_node(struct node *n, size_t address, char *data, size_t size) {
     }
 }
 
+/**
+ *
+ * @param n
+ * @param address
+ * @param data
+ * @param size
+ */
+void read_on_node(struct node *n, size_t address, char *data, size_t size) {
+    if (address + size <= n->size) {
+        void *mem_op_ptr = (n->memory + address);
+        memcpy((void *) data, (void *) mem_op_ptr, size);
+    }
+    else {
+        debug("OP READ FAILED", n->id);
+    }
+}
+
 void node_cycle(struct node *n) {
     while (1) {
         // cycle of node
@@ -57,6 +74,12 @@ void node_cycle(struct node *n) {
             }
                 break;
             case OP_READ:
+                debug("Read OP", n->id);
+                char *data = malloc(m->size * sizeof(char));
+                read_on_node(n, m->address, data, m->size);
+                debug("Send Read: Data", n->id);
+                MPI_Send(data, m->size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD);
+                free(data);
                 break;
             default:
                 break;
