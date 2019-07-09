@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <mpi.h>
 #include <stdint.h>
+#include <communication.h>
 
 size_t get_message_size() {
     return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
@@ -275,29 +276,36 @@ void execute_write(struct leader_resources *l_r) {
     size_t part_s = 0;
     struct allocation *c_a = give_for_v_address(l_r, d_w->address, &part_s);
     if (c_a == NULL) {
-        debug("Seg Fault: requested write to a not address", l_r->id);
+        debug("Seg Fault: requested write to a not allocated address", l_r->id);
         return;
     }
 
     // 2 Get the block to write to (Warning to multiple parts allocation)
     //                             (Warning to size bigger than block)
     size_t to_write_address_v = d_w->address;
+    ssize_t x = d_w->size;
     for (size_t i = part_s; i < c_a->number_parts; i++) {
         // TODO handle size overflow
+        while (x > 0) {
+            struct block *b = c_a->parts[i];
+            // compute size to write for this block
+            ssize_t to_write_size = b->size - x;
+            x -= to_write_size;
+            if (to_write_size < 0) {
+                debug("Fatal error in write operation, size to write negative", l_r->id);
+            }
+            // compute local address to write
+            size_t local_address = b->virtual_address - to_write_address_v;
+            to_write_address_v += local_address;
 
-
-        struct block *b = c_a->parts[i];
-        // compute size to write for this block
-        size_t to_write_size = d_w->size - b->size;
-        d_w->size -= to_write_size;
-        // compute local address to write
-        size_t local_address = b->virtual_address - to_write_address_v;
-        to_write_address_v += local_address;
-
-        // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
-        struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
-        MPI_Send(d_w->data, to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+            struct queue *q = queue_init();
+            printf("Size to send for Write %ld\n\n", to_write_size);
+            // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
+            struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
+            send_safe_message(m, q);
+            debug_n(d_w->data, l_r->id, d_w->size);
+            MPI_Send(d_w->data, to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        }
     }
 
     // TODO Confirmation ?
