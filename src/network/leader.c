@@ -181,7 +181,7 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 n_command->command = m->op;
                 n_command->data = NULL;
                 struct data_write *d_w = generate_data_write(m->address, m->size, NULL);
-                void *wbuff = malloc(sizeof(char) * (m->size + 1));
+                void *wbuff = malloc(sizeof(char) * (m->size + 2));
                 debug("Leader wait DATA from User for OP WRITE", l_r->id);
                 MPI_Irecv(wbuff, m->size * sizeof(char), MPI_BYTE, user, 0, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
