@@ -87,6 +87,29 @@ void send_read(void *data, unsigned short leader) {
     free(m);
 }
 
+void send_dump(void *data, unsigned short leader) {
+    MPI_Request r;
+    // MPI_Status st;
+    struct data_address *d_a = data;
+    struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
+                                         d_a->address, 0, OP_DUMP);
+
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+
+    free(m);
+}
+
+void send_dump_all(unsigned short leader) {
+    MPI_Request r;
+    // MPI_Status st;
+    struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
+                                         0, 0, OP_DUMP_ALL);
+
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+
+    free(m);
+}
+
 void send_command(enum operation op, void *data, unsigned short leader) {
     switch (op) {
         case OP_OK:
@@ -102,6 +125,14 @@ void send_command(enum operation op, void *data, unsigned short leader) {
         case OP_READ:
             debug("Send Read", 0);
             send_read(data, leader);
+            break;
+        case OP_DUMP:
+            debug("Send Dump", 0);
+            send_dump(data, leader);
+            break;
+        case OP_DUMP_ALL:
+            debug("Send Dump All", 0);
+            send_dump_all(leader);
             break;
         default:
             break;

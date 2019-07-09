@@ -17,6 +17,7 @@ enum operation {
     OP_TEST,
     OP_NONE,
     OP_DUMP,
+    OP_DUMP_ALL,
     OP_LEADER_OK,
     OP_ALIVE,
     OP_LEADER_AGAIN

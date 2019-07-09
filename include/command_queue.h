@@ -45,6 +45,8 @@ struct data_size *generate_data_size(size_t size);
 
 struct data_id *generate_data_id(unsigned short id);
 
+struct data_address *generate_data_address(size_t address);
+
 struct data_write {
     size_t address;
     size_t size;
