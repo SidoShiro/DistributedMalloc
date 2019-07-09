@@ -35,10 +35,12 @@ struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_add
 
 struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
     struct leader_resources *l_r = malloc(128);
-    l_r->leader_blks = init_nodes_same_size(nb_nodes, 8);
+    l_r->leader_blks = init_nodes_same_size(nb_nodes, DEF_NODE_SIZE);
     l_r->leader_command_queue = NULL;
     l_r->leader_reg = generate_allocs(4);
     l_r->id = id;
+    l_r->max_memory = nb_nodes * DEF_NODE_SIZE - (DEF_NODE_SIZE); // minus leader
+    l_r->availaible_memory = l_r->max_memory;
     return l_r;
 }
 
