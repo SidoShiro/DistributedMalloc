@@ -273,7 +273,7 @@ void execute_read(struct leader_resources *l_r) {
     size_t nb_read_size = 0;
     size_t x = d_r->size;
     size_t offset = 0;
-    for (size_t i = part_s; i < c_a->number_parts; i++) {
+    for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
         // TODO handle size overflow
         struct block *b = c_a->parts[i];
         // compute size to read for this block
@@ -334,6 +334,7 @@ void execute_write(struct leader_resources *l_r) {
     //                             (Warning to size bigger than block)
     size_t to_write_address_v = d_w->address;
     size_t x = d_w->size;
+    size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
         // TODO handle size overflow
         struct block *b = c_a->parts[i];
@@ -368,7 +369,8 @@ void execute_write(struct leader_resources *l_r) {
         MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD, &st);
         debug("Send Data", l_r->id);
         // debug_n(d_w->data, l_r->id, d_w->size);
-        MPI_Send(d_w->data, to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        MPI_Send((void*)((char*)d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        offset += to_write_size;
     }
 
     if (x > 0) {
