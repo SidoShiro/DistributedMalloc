@@ -22,6 +22,7 @@ set(SRCS
     src/utils/debug.c
     src/cli/user.c
     src/network/communication.c
+    src/network/data_communication.c
     src/utils/queue.c)
 
 
