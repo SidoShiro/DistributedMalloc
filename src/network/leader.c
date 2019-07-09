@@ -209,6 +209,20 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 n_command->data = d_s;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
+            case OP_DUMP:
+                debug("Leader recv OP DUMP from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                struct data_address *d_a = generate_data_address(m->address);
+                n_command->data = d_a;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
+            case OP_DUMP_ALL:
+                debug("Leader recv OP DUMP ALL from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
             default:
                 debug("Leader recv ANY OP from User", l_r->id);
                 break;
@@ -274,28 +288,28 @@ void execute_read(struct leader_resources *l_r) {
     size_t x = d_r->size;
     size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
-        // TODO handle size overflow
         struct block *b = c_a->parts[i];
-        // compute size to read for this block
-        size_t to_read_size = 0;
-        if (x <= b->size) {
-            to_read_size = x;
-            x = 0;
-        } else {
-            x -= b->size;
-            to_read_size = b->size;
-        }
 
         // compute local address to write
         size_t local_address = 0;
         if (b->virtual_address == to_write_address_v) {
-            local_address = 0;
-            to_write_address_v += to_read_size;
+            local_address = b->node_address;
         } else {
-            local_address += to_write_address_v - b->virtual_address;
-            to_write_address_v += to_read_size;
+            local_address += to_write_address_v - b->virtual_address + b->node_address;
         }
 
+        // compute size to write for this block
+        size_t to_read_size = 0;
+        size_t b_size_with_offset = b->size - (local_address - b->node_address);
+        if (x <= b_size_with_offset) {
+            to_read_size = x;
+            x = 0;
+        } else {
+            x -= b_size_with_offset;
+            to_read_size = b_size_with_offset;
+        }
+
+        to_write_address_v += to_read_size;
         nb_read_size += to_read_size;
         // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
         struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
@@ -304,7 +318,7 @@ void execute_read(struct leader_resources *l_r) {
         void *buff = malloc(sizeof(char) * (to_read_size + 1));
         MPI_Status st;
         MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
-        memcpy((void*)(read_buff + (offset * sizeof(char))), buff, to_read_size);
+        memcpy((void *) (read_buff + (offset * sizeof(char))), buff, to_read_size);
         offset += to_read_size;
         nb_read++;
         free(m);
@@ -336,27 +350,28 @@ void execute_write(struct leader_resources *l_r) {
     size_t x = d_w->size;
     size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
-        // TODO handle size overflow
         struct block *b = c_a->parts[i];
-        // compute size to write for this block
-        size_t to_write_size = 0;
-        if (x <= b->size) {
-            to_write_size = x;
-            x = 0;
-        } else {
-            x -= b->size;
-            to_write_size = b->size;
-        }
 
         // compute local address to write
         size_t local_address = 0;
         if (b->virtual_address == to_write_address_v) {
-            local_address = 0;
-            to_write_address_v += to_write_size;
+            local_address = b->node_address;
         } else {
-            local_address += to_write_address_v - b->virtual_address;
-            to_write_address_v += to_write_size;
+            local_address += to_write_address_v - b->virtual_address + b->node_address;
         }
+
+        // compute size to write for this block
+        size_t to_write_size = 0;
+        size_t b_size_with_offset = b->size - (local_address - b->node_address);
+        if (x <= b_size_with_offset) {
+            to_write_size = x;
+            x = 0;
+        } else {
+            x -= b_size_with_offset;
+            to_write_size = b_size_with_offset;
+        }
+
+        to_write_address_v += to_write_size;
 
         // struct queue *q = queue_init();
         // printf("Size to send for Write %zu\n\n", to_write_size);
@@ -369,7 +384,7 @@ void execute_write(struct leader_resources *l_r) {
         MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD, &st);
         debug("Send Data", l_r->id);
         // debug_n(d_w->data, l_r->id, d_w->size);
-        MPI_Send((void*)((char*)d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        MPI_Send((void *) ((char *) d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
         offset += to_write_size;
     }
 
@@ -380,6 +395,40 @@ void execute_write(struct leader_resources *l_r) {
     // TODO Confirmation ?
     // struct message *m = generate_message(n->id, )
     // MPI_Isend()
+}
+
+void execute_dump(struct leader_resources *l_r) {
+    struct data_address *d_a;
+    d_a = peek_command(l_r->leader_command_queue);
+    // 1 Get correct allocation (Handle notFound)
+    size_t part_s = 0;
+    struct allocation *c_a = give_for_v_address(l_r, d_a->address, &part_s);
+    if (c_a == NULL) {
+        debug("Seg Fault: requested dump to a not allocated address", l_r->id);
+        return;
+    }
+    size_t offset = 0;
+    size_t a_size = size_of_allocation(c_a);
+    char *dump = malloc(sizeof(char) * (a_size + 2));
+    for (size_t i = 0; i < c_a->number_parts; i++) {
+        struct block *b = c_a->parts[i];
+        struct message *m = generate_message(l_r->id, b->id, b->id, b->node_address, b->size, OP_READ);
+        debug("Send Read OP", l_r->id);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        void *buff = malloc(sizeof(char) * (b->size + 1));
+        MPI_Status st;
+        MPI_Recv(buff, b->size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
+        memcpy((void *) (dump + (offset * sizeof(char))), buff, b->size);
+        offset += b->size;
+    }
+
+    // Dump done
+    debug("Dump :", l_r->id);
+    debug_n(dump, l_r->id, a_size + 1);
+}
+
+void execute_dump_all(struct leader_resources *l_r) {
+    (void) l_r;
 }
 
 void execute_command(struct leader_resources *l_r) {
@@ -402,6 +451,12 @@ void execute_command(struct leader_resources *l_r) {
                 execute_read(l_r);
                 break;
             case OP_DUMP:
+                debug("EXECUTE OP DUMP, LEADER", l_r->id);
+                execute_dump(l_r);
+                break;
+            case OP_DUMP_ALL:
+                debug("EXECUTE OP DUMP ALL, LEADER", l_r->id);
+                execute_dump_all(l_r);
                 break;
             case OP_SNAP:
                 break;
