@@ -23,41 +23,6 @@ struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
     return l_r;
 }
 
-int check_block_for_alloc(size_t *res_addr, struct block *b, size_t size, struct leader_resources *l_r) {
-    if (0 == b->free) {
-        if (size == b->size) {
-            b->free = 1;
-            struct allocation *a = malloc(sizeof(struct allocation));
-            a->number_parts = 1;
-            a->v_address_start = b->virtual_address;
-            a->parts = malloc(a->number_parts * sizeof(struct allocation *));
-            a->parts[0] = b;
-            add_allocation(l_r->leader_reg, a);
-            *res_addr = b->virtual_address;
-            return 1;
-        } else if (size < b->size) {
-            b->free = 1;
-            b = split_block_u(b, size);
-            if (b) {
-                struct allocation *a = malloc(32 + sizeof(struct allocation));
-                a->number_parts = 1;
-                a->v_address_start = b->virtual_address;
-                a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
-                a->parts[0] = b;
-                add_allocation(l_r->leader_reg, a);
-                *res_addr = b->virtual_address;
-                return 1;
-            } else {
-                debug("Fatal Error, split invalid or memory error", 1);
-            }
-        } else {
-
-        }
-
-    }
-    return 0;
-}
-
 /**
  * Allocated memory for the User, using free space of nodes
  * | X1 |     |  X2 | X1 |
