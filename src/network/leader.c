@@ -64,6 +64,8 @@ struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
  * @return 1 if okay, 0 if no blocks possible for this size
  */
 size_t alloc_memory(size_t size, struct leader_resources *l_r) {
+    if (size >= l_r->max_memory || size >= l_r->availaible_memory)
+        return SIZE_MAX;
     struct block_register *blks = l_r->leader_blks;
     if (!blks && blks->nb_blocks > 0) {
         debug("ERROR not malloc blockS !!!", 0); //l_r->id);
@@ -82,6 +84,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
                     a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
                     a->parts[0] = b;
                     add_allocation(l_r->leader_reg, a);
+                    l_r->availaible_memory -= size_of_allocation(a);
                     return b->virtual_address;
                 } else if (size < b->size) {
                     b->free = 1;
@@ -93,6 +96,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
                         a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
                         a->parts[0] = b;
                         add_allocation(l_r->leader_reg, a);
+                        l_r->availaible_memory -= size_of_allocation(a);
                         return b->virtual_address;
                     } else {
                         debug("Fatal Error, split invalid or memory error", 1);
@@ -110,7 +114,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     ssize_t m_size = size;
     for (size_t i = 0; i < blks->nb_blocks; i++) {
         struct block *b = blks->blks[i];
-        while (b && m_size > 0) {
+        while (b && b->id != l_r->id && m_size > 0) {
             if (b->free == 0) {
                 b->free = 1;
                 m_size -= b->size;
@@ -127,6 +131,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
         }
         if (m_size <= 0) {
             add_allocation(l_r->leader_reg, a);
+            l_r->availaible_memory -= size_of_allocation(a);
             return a->v_address_start;
         }
     }
