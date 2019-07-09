@@ -3,10 +3,11 @@
 #include "message.h"
 #include "globals.h"
 
-#include <mpi.h>
 #include <debug.h>
-#include <stdint-gcc.h>
-#include <event.h>
+#include <mpi.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 void send_write(void *data, unsigned short leader) {
     MPI_Request r;
