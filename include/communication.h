@@ -30,4 +30,10 @@ struct message *receive_message(struct queue *message_queue);
  */
 void *recieve_data(size_t size, struct queue *queue, unsigned source);
 
+/*
+ * Send message to all nodes except user and itself
+ * m_send->id_t will change according to the target node
+ */
+void broadcast_message(struct message *m_send, unsigned id, unsigned network_size);
+
 #endif /* !DISTRIBUTEDMALLOC_COMMUNICATION_H */
