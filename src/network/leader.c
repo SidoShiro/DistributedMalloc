@@ -197,24 +197,11 @@ void execute_malloc(struct leader_resources *l_r) {
 }
 
 void execute_read(struct leader_resources *l_r) {
-    (void) l_r;
-}
+    struct data_read *d_r;
+    d_r = peek_command(l_r->leader_command_queue);
 
-struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_address, size_t *part) {
-    if (!l_r->leader_reg)
-        return NULL;
-    struct allocation_register *reg = l_r->leader_reg;
-    for (size_t i = 0; i < reg->count_alloc; i++) {
-        for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
-            // FIXME check if its ok
-            if (reg->allocs[i]->parts[j]->virtual_address <= v_address
-                && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > v_address) {
-                *part = j;
-                return reg->allocs[i];
-            }
-        }
-    }
-    return NULL;
+
+
 }
 
 void execute_write(struct leader_resources *l_r) {
@@ -254,8 +241,6 @@ void execute_write(struct leader_resources *l_r) {
         MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
         MPI_Send(d_w->data, to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
     }
-
-
 
     // TODO Confirmation ?
     // struct message *m = generate_message(n->id, )
