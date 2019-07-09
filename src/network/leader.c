@@ -302,29 +302,46 @@ void execute_write(struct leader_resources *l_r) {
     // 2 Get the block to write to (Warning to multiple parts allocation)
     //                             (Warning to size bigger than block)
     size_t to_write_address_v = d_w->address;
-    ssize_t x = d_w->size;
-    for (size_t i = part_s; i < c_a->number_parts; i++) {
+    size_t x = d_w->size;
+    for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
         // TODO handle size overflow
-        while (x > 0) {
-            struct block *b = c_a->parts[i];
-            // compute size to write for this block
-            ssize_t to_write_size = b->size - x;
-            x -= to_write_size;
-            if (to_write_size < 0) {
-                debug("Fatal error in write operation, size to write negative", l_r->id);
-            }
-            // compute local address to write
-            size_t local_address = b->virtual_address - to_write_address_v;
-            to_write_address_v += local_address;
-
-            struct queue *q = queue_init();
-            printf("Size to send for Write %ld\n\n", to_write_size);
-            // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
-            struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
-            send_safe_message(m, q);
-            debug_n(d_w->data, l_r->id, d_w->size);
-            MPI_Send(d_w->data, to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        struct block *b = c_a->parts[i];
+        // compute size to write for this block
+        size_t to_write_size = 0;
+        if (x <= b->size) {
+            to_write_size = x;
+            x = 0;
+        } else {
+            x -= b->size;
+            to_write_size = b->size;
         }
+
+        // compute local address to write
+        size_t local_address = 0;
+        if (b->virtual_address == to_write_address_v) {
+            local_address = 0;
+            to_write_address_v += to_write_size;
+        } else {
+            local_address += to_write_address_v - b->virtual_address;
+            to_write_address_v += to_write_size;
+        }
+
+        // struct queue *q = queue_init();
+        // printf("Size to send for Write %zu\n\n", to_write_size);
+        // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
+        struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
+        debug("Send Write OP", l_r->id);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        struct message m2;
+        MPI_Status st;
+        MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD, &st);
+        debug("Send Data", l_r->id);
+        // debug_n(d_w->data, l_r->id, d_w->size);
+        MPI_Send(d_w->data, to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+    }
+
+    if (x > 0) {
+        debug("Write asked is overflowing the allocated block", l_r->id);
     }
 
     // TODO Confirmation ?
