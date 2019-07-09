@@ -10,66 +10,55 @@ struct node *generate_node(unsigned short id, size_t size) {
         return NULL;
     n->id = id;
     n->size = size;
-    n->memory = malloc(size * sizeof(char) + 1);
+    n->memory = malloc((1 + size) * sizeof(char));
+    for (size_t i = 0; i < size; i++) {
+        n->memory[i] = '#';
+    }
+    n->memory[size] = '\0';
     n->isleader = 0;
     return n;
 }
 
 void write_on_node(struct node *n, size_t address, char *data, size_t size) {
-    if (address < n->size && address + size < n->size) {
-        n->memory = (char *) memcpy((void *) (n->memory + address), (void *) data, size);
+    if (address + size <= n->size) {
+        void *mem_op_ptr = (n->memory + address);
+        memcpy((void *) mem_op_ptr, (void *) data, size);
         debug("Write done of :", n->id);
-        debug_n((char *)n->memory, n->id, n->size);
+        debug_n((char *) n->memory, n->id, n->size);
+    }
+    else {
+        // printf("aske_addr %zu, ask_mem %zu, size_mem %zu\n\n", address, size, n->size);
+        debug("OP WRITE FAILED", n->id);
     }
 }
 
 void node_cycle(struct node *n) {
     while (1) {
         // cycle of node
-        struct queue *q = queue_init();
-        struct message *m;
-        m = receive_message(q);
-
+        // OLD FIXME struct queue *q = queue_init();
+        struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
+        MPI_Status st;
+        MPI_Recv(m, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, 3, MPI_COMM_WORLD, &st);
+        debug("Recv OP", n->id);
         switch (m->op) {
             case OP_OK:
                 break;
-            case OP_MALLOC:
-                break;
-            case OP_FREE:
-                break;
             case OP_WRITE: {
+                debug("Write OP : send OK", n->id);
+                struct message *mW = generate_message(n->id, m->id_s, n->id, 0, 0, OP_OK);
+                MPI_Send(mW, sizeof(struct message), MPI_BYTE, mW->id_t, 3, MPI_COMM_WORLD);
                 size_t addr = m->address;
                 size_t size = m->size;
                 char *data = malloc(size * sizeof(char));
-                MPI_Status st;
-                MPI_Recv(data, size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD, &st);
+                MPI_Status st3;
+                MPI_Recv(data, size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD, &st3);
                 write_on_node(n, addr, data, size);
                 free(data);
             }
                 break;
             case OP_READ:
                 break;
-            case OP_SNAP:
-                break;
-            case OP_LEADER:
-                break;
-            case OP_WHOISLEADER:
-                break;
-            case OP_REVIVE:
-                break;
-            case OP_KILL:
-                break;
-            case OP_TEST:
-                break;
-            case OP_NONE:
-                break;
-            case OP_DUMP:
-                break;
-            case OP_LEADER_OK:
-                break;
-            case OP_ALIVE:
-                break;
-            case OP_LEADER_AGAIN:
+            default:
                 break;
         }
         if (m->op == OP_KILL)
