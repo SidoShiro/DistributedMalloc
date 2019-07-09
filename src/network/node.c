@@ -69,8 +69,11 @@ void node_cycle(struct node *n) {
                 size_t size = m->size;
 
                 char *data = recieve_data(size, q, m->id_s);
-                if (data == NULL)
+                if (data == NULL){
                     debug("NOOT Recieved data", n->id);
+                    // FIXME : What do we do then
+                    continue;
+                }
 
                 write_on_node(n, addr, data, size);
                 free(data);
