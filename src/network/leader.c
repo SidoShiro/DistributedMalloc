@@ -303,7 +303,7 @@ void execute_read(struct leader_resources *l_r) {
         // compute local address to write
         size_t local_address = 0;
         if (b->virtual_address == to_write_address_v) {
-            local_address = 0;
+            local_address = b->node_address;
             to_write_address_v += to_read_size;
         } else {
             local_address += to_write_address_v - b->virtual_address;
@@ -318,7 +318,7 @@ void execute_read(struct leader_resources *l_r) {
         void *buff = malloc(sizeof(char) * (to_read_size + 1));
         MPI_Status st;
         MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
-        memcpy((void*)(read_buff + (offset * sizeof(char))), buff, to_read_size);
+        memcpy((void *) (read_buff + (offset * sizeof(char))), buff, to_read_size);
         offset += to_read_size;
         nb_read++;
         free(m);
@@ -365,7 +365,7 @@ void execute_write(struct leader_resources *l_r) {
         // compute local address to write
         size_t local_address = 0;
         if (b->virtual_address == to_write_address_v) {
-            local_address = 0;
+            local_address = b->node_address;
             to_write_address_v += to_write_size;
         } else {
             local_address += to_write_address_v - b->virtual_address;
@@ -383,7 +383,7 @@ void execute_write(struct leader_resources *l_r) {
         MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD, &st);
         debug("Send Data", l_r->id);
         // debug_n(d_w->data, l_r->id, d_w->size);
-        MPI_Send((void*)((char*)d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        MPI_Send((void *) ((char *) d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
         offset += to_write_size;
     }
 
