@@ -2,6 +2,7 @@
 #include <string.h>
 #include <mpi.h>
 #include <debug.h>
+#include <leader_election.h>
 #include "node.h"
 
 struct node *generate_node(unsigned short id, size_t size) {
@@ -25,8 +26,7 @@ void write_on_node(struct node *n, size_t address, char *data, size_t size) {
         memcpy((void *) mem_op_ptr, (void *) data, size);
         debug("Write done of :", n->id);
         debug_n((char *) n->memory, n->id, n->size);
-    }
-    else {
+    } else {
         // printf("aske_addr %zu, ask_mem %zu, size_mem %zu\n\n", address, size, n->size);
         debug("OP WRITE FAILED", n->id);
     }
@@ -43,21 +43,22 @@ void read_on_node(struct node *n, size_t address, char *data, size_t size) {
     if (address + size <= n->size) {
         void *mem_op_ptr = (n->memory + address);
         memcpy((void *) data, (void *) mem_op_ptr, size);
-    }
-    else {
+    } else {
         debug("OP READ FAILED", n->id);
     }
 }
 
-void node_cycle(struct node *n) {
+int node_cycle(struct node *n) {
     while (1) {
         // cycle of node
-        // OLD FIXME struct queue *q = queue_init();
-        struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
-        MPI_Status st;
-        MPI_Recv(m, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, 3, MPI_COMM_WORLD, &st);
+        struct queue *q = queue_init();
+        struct message *m = receive_message(q);
         debug("Recv OP", n->id);
         switch (m->op) {
+            case OP_START_LEADER:
+                queue_free(q);
+                free(m);
+                return leader_election(n->id, n->size);
             case OP_OK:
                 break;
             case OP_WRITE: {
@@ -84,8 +85,6 @@ void node_cycle(struct node *n) {
             default:
                 break;
         }
-        if (m->op == OP_KILL)
-            break;
         free(m);
-    }
+    } // while(1)
 }
