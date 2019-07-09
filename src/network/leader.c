@@ -405,25 +405,8 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
     // Init leader resource
     printf("NB NODES :%d,", nb_nodes);
 
-    printf("NB NODES :%d,", nb_nodes);
-    void *k = malloc(sizeof(struct message));
-    (void) k;
     debug("START LEADER LOOP", n->id);
     struct leader_resources *l_r = generate_leader_resources(nb_nodes, n->id);
-
-    debug("PASS LEADER_RESOURCES", n->id);
-    for (size_t o = 0; o < 1; o++) {
-        // void *g =generate_message(0, DEF_NODE_USER, DEF_NODE_USER, 0, 0, OP_MALLOC);
-        // (void)g;
-        void *jj = malloc(48); //
-        // sizeof(struct message));
-        (void) jj;
-    }
-
-    for (size_t i = 0; i < l_r->leader_blks->nb_blocks; i++) {
-        struct block *b = l_r->leader_blks->blks[i];
-        printf("%u\n", b->id);
-    }
 
     /*
     // MPI_Isend();
