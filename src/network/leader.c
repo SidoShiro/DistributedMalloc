@@ -396,6 +396,28 @@ void execute_write(struct leader_resources *l_r) {
     // MPI_Isend()
 }
 
+void execute_dump(struct leader_resources *l_r) {
+    struct data_address *d_a;
+    d_a = peek_command(l_r->leader_command_queue);
+    // 1 Get correct allocation (Handle notFound)
+    size_t part_s = 0;
+    struct allocation *c_a = give_for_v_address(l_r, d_a->address, &part_s);
+    if (c_a == NULL) {
+        debug("Seg Fault: requested dump to a not allocated address", l_r->id);
+        return;
+    }
+    size_t a_size = size_of_allocation(c_a);
+    char *dump = malloc(sizeof(char) * a_size);
+    for (size_t i = 0; i < c_a->number_parts; i++) {
+        struct block *b = c_a->parts[i];
+
+    }
+}
+
+void execute_dump_all(struct leader_resources *l_r) {
+
+}
+
 void execute_command(struct leader_resources *l_r) {
     if (peek_user_command(l_r->leader_command_queue) != OP_NONE) {
 
@@ -416,6 +438,12 @@ void execute_command(struct leader_resources *l_r) {
                 execute_read(l_r);
                 break;
             case OP_DUMP:
+                debug("EXECUTE OP DUMP, LEADER", l_r->id);
+                execute_dump(l_r);
+                break;
+            case OP_DUMP_ALL:
+                debug("EXECUTE OP DUMP ALL, LEADER", l_r->id);
+                execute_dump_all(l_r);
                 break;
             case OP_SNAP:
                 break;
