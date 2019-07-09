@@ -209,6 +209,20 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 n_command->data = d_s;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
+            case OP_DUMP:
+                debug("Leader recv OP DUMP from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                struct data_address *d_a = generate_data_address(m->address);
+                n_command->data = d_a;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
+            case OP_DUMP_ALL:
+                debug("Leader recv OP DUMP ALL from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
             default:
                 debug("Leader recv ANY OP from User", l_r->id);
                 break;
