@@ -288,28 +288,28 @@ void execute_read(struct leader_resources *l_r) {
     size_t x = d_r->size;
     size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
-        // TODO handle size overflow
         struct block *b = c_a->parts[i];
-        // compute size to read for this block
-        size_t to_read_size = 0;
-        if (x <= b->size) {
-            to_read_size = x;
-            x = 0;
-        } else {
-            x -= b->size;
-            to_read_size = b->size;
-        }
 
         // compute local address to write
         size_t local_address = 0;
         if (b->virtual_address == to_write_address_v) {
             local_address = b->node_address;
-            to_write_address_v += to_read_size;
         } else {
-            local_address += to_write_address_v - b->virtual_address;
-            to_write_address_v += to_read_size;
+            local_address += to_write_address_v - b->virtual_address + b->node_address;
         }
 
+        // compute size to write for this block
+        size_t to_read_size = 0;
+        size_t b_size_with_offset = b->size - (local_address - b->node_address);
+        if (x <= b_size_with_offset) {
+            to_read_size = x;
+            x = 0;
+        } else {
+            x -= b_size_with_offset;
+            to_read_size = b_size_with_offset;
+        }
+
+        to_write_address_v += to_read_size;
         nb_read_size += to_read_size;
         // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
         struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
@@ -350,27 +350,28 @@ void execute_write(struct leader_resources *l_r) {
     size_t x = d_w->size;
     size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
-        // TODO handle size overflow
         struct block *b = c_a->parts[i];
-        // compute size to write for this block
-        size_t to_write_size = 0;
-        if (x <= b->size) {
-            to_write_size = x;
-            x = 0;
-        } else {
-            x -= b->size;
-            to_write_size = b->size;
-        }
 
         // compute local address to write
         size_t local_address = 0;
         if (b->virtual_address == to_write_address_v) {
             local_address = b->node_address;
-            to_write_address_v += to_write_size;
         } else {
-            local_address += to_write_address_v - b->virtual_address;
-            to_write_address_v += to_write_size;
+            local_address += to_write_address_v - b->virtual_address + b->node_address;
         }
+
+        // compute size to write for this block
+        size_t to_write_size = 0;
+        size_t b_size_with_offset = b->size - (local_address - b->node_address);
+        if (x <= b_size_with_offset) {
+            to_write_size = x;
+            x = 0;
+        } else {
+            x -= b_size_with_offset;
+            to_write_size = b_size_with_offset;
+        }
+
+        to_write_address_v += to_write_size;
 
         // struct queue *q = queue_init();
         // printf("Size to send for Write %zu\n\n", to_write_size);
