@@ -42,14 +42,20 @@ char *read_cmd() {
 char **split_cmd(char *cmd) {
     char **tokens = NULL;
     char *token;
+    int w = 0;
     ssize_t nb_tok = 1;
     token = strtok(cmd, " ");
+    if (token && 0 == strcmp(token, "w"))
+        w++;
     /* walk through other tokens */
     while (token != NULL) {
         tokens = realloc(tokens, nb_tok * sizeof(char *));
         tokens[nb_tok - 1] = token;
         nb_tok++;
-        token = strtok(NULL, " ");
+        if (nb_tok == 4 && w == 1)
+            token = strtok(NULL, "\0");
+        else
+            token = strtok(NULL, " ");
     }
     tokens = realloc(tokens, nb_tok * sizeof(char *));
     tokens[nb_tok - 1] = NULL;
