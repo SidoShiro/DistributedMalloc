@@ -82,3 +82,10 @@ struct data_id *generate_data_id(unsigned short id) {
     d_i->id = id;
     return d_i;
 }
+
+
+struct data_address *generate_data_address(size_t address) {
+    struct data_address *d_a = malloc(sizeof(struct data_address));
+    d_a->address = address;
+    return d_a;
+}
