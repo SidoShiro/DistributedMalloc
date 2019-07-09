@@ -11,6 +11,7 @@ enum operation {
     OP_READ,
     OP_SNAP,
     OP_LEADER,
+    OP_START_LEADER,
     OP_WHOISLEADER,
     OP_REVIVE,
     OP_KILL,
@@ -19,6 +20,7 @@ enum operation {
     OP_DUMP,
     OP_DUMP_ALL,
     OP_LEADER_OK,
+    OP_IS_ALIVE,
     OP_ALIVE,
     OP_LEADER_AGAIN
 };
