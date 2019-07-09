@@ -220,14 +220,27 @@ void execute_malloc(struct leader_resources *l_r) {
     struct data_size *d_s = peek_command(l_r->leader_command_queue);
     if (!d_s) {
         debug("ERROR allocation data_size for OP MALLOC execution [LEADER]", l_r->id);
+        return;
     }
     size_t v_addr = alloc_memory(d_s->size, l_r);
     size_t sss = d_s->size;
-    if (v_addr == 999 || v_addr == 1999) {
+    if (v_addr == 999 || v_addr == 1999 || v_addr == SIZE_MAX) {
+        if (v_addr == SIZE_MAX) {
+            debug("Out of memory", l_r->id);
+            struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, SIZE_MAX, 0, OP_MALLOC);
+            MPI_Request r;
+            MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+            free(m);
+            return;
+        }
         debug("FATAL ERROR", l_r->id);
         if (v_addr == 1999) {
             debug("SEC", l_r->id);
         }
+        struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, SIZE_MAX, SIZE_MAX, OP_MALLOC);
+        MPI_Request r;
+        MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+        free(m);
         return;
     }
     debug("Allocation at ", l_r->id);
