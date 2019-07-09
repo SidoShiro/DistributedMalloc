@@ -77,7 +77,8 @@ void node_cycle(struct node *n) {
                 debug("Read OP", n->id);
                 char *data = malloc(m->size * sizeof(char));
                 read_on_node(n, m->address, data, m->size);
-                MPI_Send(data, m->size * sizeof(char), MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD);
+                debug("Send Read: Data", n->id);
+                MPI_Send(data, m->size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD);
                 free(data);
                 break;
             default:
