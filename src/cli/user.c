@@ -5,6 +5,8 @@
 
 #include <mpi.h>
 #include <debug.h>
+#include <stdint-gcc.h>
+#include <event.h>
 
 void send_write(void *data, unsigned short leader) {
     MPI_Request r;
@@ -45,9 +47,16 @@ void send_malloc(void *data, unsigned short leader) {
     */
     if (0 == MPI_Wait(&r2, &st)) {
         struct message *m2 = buff;
-        printf("user: request malloc of size %zu, is at address %zu on the network\n",
-                m2->size,
-                m2->address);
+        if (m2->address != SIZE_MAX) {
+            printf("user: request malloc of size %zu, is at address %zu on the network\n",
+                   m2->size,
+                   m2->address);
+        }
+        else if (m2->size == 0) {
+            debug("Network: Out of memory", 0);
+        } else {
+            debug("Network: Fatal error in leader", 0);
+        }
     }
     free(m);
     free(buff);
