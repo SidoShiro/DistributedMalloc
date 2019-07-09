@@ -26,7 +26,7 @@ unsigned leader_election(unsigned id, unsigned network_size) {
                     debug("LEADER IS DEAD, STARTING AGAIN", id);
                     for (unsigned i = 1; i < network_size; ++i) {
                         struct message *m_again = generate_message(id, i, leader, 0, 0, OP_LEADER_AGAIN);
-                        MPI_Send(m_again, sizeof(*m_again), MPI_BYTE, i, 201, MPI_COMM_WORLD);
+                        MPI_Send(m_again, sizeof(*m_again), MPI_BYTE, i, TAG_MSG, MPI_COMM_WORLD);
                         free(m_again);
                     }
                     return leader_election(id, network_size); // TODO: Check if it works + fix leaks
@@ -57,13 +57,13 @@ unsigned leader_election(unsigned id, unsigned network_size) {
                 // send LEADER OK
                 for (unsigned i = 1; i < network_size; ++i) {
                     struct message *m_ok = generate_message(id, i, leader, 0, 0, OP_LEADER_OK);
-                    MPI_Send(m_ok, sizeof(*m_ok), MPI_BYTE, i, 201, MPI_COMM_WORLD);
+                    MPI_Send(m_ok, sizeof(*m_ok), MPI_BYTE, i, TAG_MSG, MPI_COMM_WORLD);
                     free(m_ok);
                 }
 
                 // send leader to user
                 struct message *m_user = generate_message(id, 0, leader, 0, 0, OP_OK);
-                MPI_Send(m_user, sizeof(*m_user), MPI_BYTE, 0, 201, MPI_COMM_WORLD);
+                MPI_Send(m_user, sizeof(*m_user), MPI_BYTE, 0, TAG_MSG, MPI_COMM_WORLD);
                 free(m_user);
                 return leader;
             }
