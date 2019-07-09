@@ -38,6 +38,7 @@ void *recieve_data(size_t size, struct queue *queue, unsigned source) {
             MPI_Irecv(m_recv, sizeof(struct message), MPI_CHAR, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, &r_msg);
         }
         // Checking data recieved
+        MPI_Test(&r_data, &f_data, MPI_STATUS_IGNORE);
         if (f_data) {
             MPI_Cancel(&r_msg);
             return data;
@@ -47,6 +48,6 @@ void *recieve_data(size_t size, struct queue *queue, unsigned source) {
     MPI_Cancel(&r_msg);
     MPI_Cancel(&r_data);
     free(m_recv);
-    return 0;
+    return NULL;
 
 }
