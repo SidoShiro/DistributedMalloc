@@ -13,6 +13,8 @@ struct leader_resources {
     struct allocation_register  *leader_reg;
     struct command_queue *leader_command_queue;
     unsigned short id;
+    size_t availaible_memory;
+    size_t max_memory;
 };
 
 struct address_search {
