@@ -4,6 +4,7 @@
 #include <globals.h>
 #include <debug.h>
 #include "cli.h"
+#include "communication.h"
 
 char *read_cmd() {
     ssize_t buffer_size = 256;
@@ -289,7 +290,7 @@ void execute(char **args, unsigned short leader) {
 
 unsigned short get_leader() {
     struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
-    MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, 201, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     debug("Got Leader !", DEF_NODE_USER);
     return m->id_o;
 }
