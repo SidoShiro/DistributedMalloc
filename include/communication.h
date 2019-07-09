@@ -8,7 +8,7 @@
 // Number of attempts failed before considering the node as dead.
 #define NB_ITER 60
 
-#define TAG_MSG 201
+#define TAG_MSG 3
 #define TAG_DATA 4
 
 /*
