@@ -14,6 +14,23 @@ size_t get_message_size() {
     return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
 }
 
+struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_address, size_t *part) {
+    if (!l_r->leader_reg)
+        return NULL;
+    struct allocation_register *reg = l_r->leader_reg;
+    for (size_t i = 0; i < reg->count_alloc; i++) {
+        for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
+            // FIXME check if its ok
+            if (reg->allocs[i]->parts[j]->virtual_address <= v_address
+                && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > v_address) {
+                *part = j;
+                return reg->allocs[i];
+            }
+        }
+    }
+    return NULL;
+}
+
 struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
     struct leader_resources *l_r = malloc(128);
     l_r->leader_blks = init_nodes_same_size(nb_nodes, 8);
