@@ -407,16 +407,28 @@ void execute_dump(struct leader_resources *l_r) {
         debug("Seg Fault: requested dump to a not allocated address", l_r->id);
         return;
     }
+    size_t offset = 0;
     size_t a_size = size_of_allocation(c_a);
-    char *dump = malloc(sizeof(char) * a_size);
+    char *dump = malloc(sizeof(char) * (a_size + 2));
     for (size_t i = 0; i < c_a->number_parts; i++) {
         struct block *b = c_a->parts[i];
-
+        struct message *m = generate_message(l_r->id, b->id, b->id, b->node_address, b->size, OP_READ);
+        debug("Send Read OP", l_r->id);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        void *buff = malloc(sizeof(char) * (b->size + 1));
+        MPI_Status st;
+        MPI_Recv(buff, b->size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
+        memcpy((void *) (dump + (offset * sizeof(char))), buff, b->size);
+        offset += b->size;
     }
+
+    // Dump done
+    debug("Dump :", l_r->id);
+    debug_n(dump, l_r->id, a_size + 1);
 }
 
 void execute_dump_all(struct leader_resources *l_r) {
-
+    (void) l_r;
 }
 
 void execute_command(struct leader_resources *l_r) {
