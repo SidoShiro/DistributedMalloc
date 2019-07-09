@@ -9,7 +9,6 @@
 int send_safe_message(struct message *m_send, struct queue *queue) {
     debug("init send safe message", m_send->id_s);
     MPI_Send(m_send, sizeof(struct message), MPI_BYTE, m_send->id_t, 201, MPI_COMM_WORLD);
-    //MPI_Send(m_send, sizeof(struct message), MPI_BYTE, m_send->id_t, 201, MPI_COMM_WORLD);
 
     struct message *m_recv = calloc(1, sizeof(struct message));
     MPI_Request r_ok;
@@ -22,12 +21,6 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
 
     for (int i = 0; i < NB_ITER; i++) {
         MPI_Test(&r_ok, &f_ok, MPI_STATUS_IGNORE);
-        if (i == NB_ITER / 2) {
-            //printf("%u: msg from %u to %u with op %u\n", m_send->id_s, m_recv->id_s, m_recv->id_t, m_recv->op);
-            //printf("CURR LEADER: %u\n", m_send->id_o);
-            // TODO find another solution
-            // MPI_Send(m_send, sizeof(struct message), MPI_BYTE, m_send->id_t, 201, MPI_COMM_WORLD);
-        }
         if (f_ok) {
             //debug("receive_something", m_recv->id_t);
             //printf("%u receive from %u, op = %u, leader = %u\n", m_recv->id_t, m_recv->id_s, m_recv->op, m_recv->id_o);

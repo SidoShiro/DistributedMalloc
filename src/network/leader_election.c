@@ -25,8 +25,6 @@ unsigned leader_election(unsigned id, unsigned network_size) {
                 if (next == leader) {
                     debug("LEADER IS DEAD, STARTING AGAIN", id);
                     for (unsigned i = 1; i < network_size; ++i) {
-                        //printf("ZAEFAEZFAZEFAZEF\n");
-                        fflush(0);
                         struct message *m_again = generate_message(id, i, leader, 0, 0, OP_LEADER_AGAIN);
                         MPI_Send(m_again, sizeof(*m_again), MPI_BYTE, i, 201, MPI_COMM_WORLD);
                         free(m_again);

@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     {
         debug("Start Node", rank);
 
-        if (rank != 1) {
+        //if (rank != 1) {
 
             unsigned leader = leader_election(rank, size);
 
@@ -52,8 +52,6 @@ int main(int argc, char **argv) {
             // Node Creation
             struct node *n = generate_node(rank, DEF_NODE_SIZE);
             // Form rank number !
-
-
         
             // Start Leader !
             if (n->id == leader) {
@@ -66,7 +64,7 @@ int main(int argc, char **argv) {
                 // routine
             }
             */
-        }
+        //}
 
     }
 
