@@ -10,7 +10,7 @@
 #include "message.h"
 #include "utils.h"
 
-void start_cli();
+void start_cli(unsigned size);
 
 void send_command(enum operation op, void *data, unsigned short leader);
 
