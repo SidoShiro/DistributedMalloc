@@ -21,6 +21,7 @@ struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_add
     for (size_t i = 0; i < reg->count_alloc; i++) {
         for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
             // FIXME check if its ok
+            printf("%zu == %zu  \n\n", v_address, reg->allocs[i]->parts[j]->virtual_address);
             if (reg->allocs[i]->parts[j]->virtual_address <= v_address
                 && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > v_address) {
                 *part = j;
@@ -57,7 +58,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     for (size_t i = 0; i < blks->nb_blocks; i++) {
         struct block *b = blks->blks[i];
         while (b != NULL) {
-            if (0 == b->free) {
+            if (0 == b->free && b->id != l_r->id) {
                 if (size == b->size) {
                     b->free = 1;
                     struct allocation *a = malloc(32 + sizeof(struct allocation));
@@ -149,13 +150,17 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
         struct command_queue *n_command = generate_command_queue(m->op, NULL);
         switch (m->op) {
             case OP_OK:
-                debug("Leader recv OP OK from User", l_r->id);
+                if (m->id_s == 0) {
+                    debug("Leader recv OP OK from User", l_r->id);
+                } else {
+                    debug("Leader recv OP OK from a node", l_r->id);
+                }
                 break;
             case OP_WRITE:
                 debug("Leader recv OP WRITE from User", l_r->id);
                 n_command->command = m->op;
                 n_command->data = NULL;
-                struct data_write *d_w = generate_data_write(m->size, m->size, NULL);
+                struct data_write *d_w = generate_data_write(m->address, m->size, NULL);
                 void *wbuff = malloc(sizeof(char) * (m->size + 1));
                 debug("Leader wait DATA from User for OP WRITE", l_r->id);
                 MPI_Irecv(wbuff, m->size * sizeof(char), MPI_BYTE, user, 0, MPI_COMM_WORLD, &r);
