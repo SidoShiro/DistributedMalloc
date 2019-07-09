@@ -55,11 +55,19 @@ struct message *receive_message(struct queue *message_queue) {
     MPI_Recv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     debug("queue empty, receive message", m_recv->id_t);
     if (m_recv->need_callback) {
-        debug("send callback", m_recv->id_s + 10 * m_recv->id_t);
+        debug("send callback", m_recv->id_t);
         struct message *m_alive = generate_message_a(m_recv->id_t, m_recv->id_s, 0, 0, 0, OP_ALIVE, 0);
         MPI_Send(m_alive, sizeof(struct message), MPI_BYTE, m_recv->id_s, TAG_MSG, MPI_COMM_WORLD);
         //printf("%u respond to %u %u with a %u __ \n", m_alive->id_s, status.MPI_SOURCE, m_alive->id_t, m_alive->op);
         free(m_alive);
     }
     return m_recv;
+}
+
+void broadcast_message(struct message *m_send, unsigned id, unsigned network_size) {
+    for (unsigned i = 1; i < network_size; ++i) {
+        m_send->id_t = i;
+        if (i != id)
+            MPI_Send(m_send, sizeof(struct message), MPI_BYTE, i, TAG_MSG, MPI_COMM_WORLD);
+    }
 }
