@@ -174,68 +174,72 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
     //free(buff);
 }
 
-void execute_malloc(struct node *n, struct leader_resources *l_r) {
+void execute_malloc(struct leader_resources *l_r) {
     struct data_size *d_s = peek_command(l_r->leader_command_queue);
     if (!d_s) {
-        debug("ERROR allocation data_size for OP MALLOC execution [LEADER]", n->id);
+        debug("ERROR allocation data_size for OP MALLOC execution [LEADER]", l_r->id);
     }
     size_t v_addr = alloc_memory(d_s->size, l_r);
     size_t sss = d_s->size;
     if (v_addr == 999 || v_addr == 1999) {
-        debug("FATAL ERROR", n->id);
+        debug("FATAL ERROR", l_r->id);
         if (v_addr == 1999) {
-            debug("SEC", n->id);
+            debug("SEC", l_r->id);
         }
         return;
     }
-    debug("Allocation at ", n->id);
+    debug("Allocation at ", l_r->id);
     printf("%zu of %zu bytes\n", v_addr, sss);
-    if (n->id != l_r->id) {
-        debug("WTFFFFFFFFFFFFFFFFFFFf", n->id);
-    } else {
-        struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, v_addr, sss, OP_MALLOC);
-        MPI_Request r;
-        MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
-        free(m);
-    }
+    struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, v_addr, sss, OP_MALLOC);
+    MPI_Request r;
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    free(m);
 }
 
-void execute_read(struct node *n, struct leader_resources *l_r) {
-    (void) n;
+void execute_read(struct leader_resources *l_r) {
     (void) l_r;
 }
 
-void execute_write(struct node *n, struct leader_resources *l_r) {
+void execute_write(struct leader_resources *l_r) {
     // MPI_Request r;
     // MPI_Status st;
     struct data_write *d_w;
     d_w = peek_command(l_r->leader_command_queue);
+    // d_w.address is the virtual address on the network
+    //    .size size in bytes of data
+    //    .data
+
+    // 1 Get the block to write to (Warning to multiple parts allocation)
+    //                             (Warning to size bigger than block)
+
+    // 2 Send Write OP to each node (Warning to the local address of the node, not the virtual)
+
+
     (void) d_w;
-    (void) n;
     (void) l_r;
     // TODO
     // struct message *m = generate_message(n->id, )
     // MPI_Isend()
 }
 
-void execute_command(struct node *n, struct leader_resources *l_r) {
+void execute_command(struct leader_resources *l_r) {
     if (peek_user_command(l_r->leader_command_queue) != OP_NONE) {
 
         switch (peek_user_command(l_r->leader_command_queue)) {
             case OP_MALLOC:
-                debug("EXECUTE OP MALLOC LEADER", n->id);
-                execute_malloc(n, l_r);
+                debug("EXECUTE OP MALLOC LEADER", l_r->id);
+                execute_malloc(l_r);
                 break;
             case OP_FREE:
-                debug("EXECUTE OP FREE LEADER", n->id);
+                debug("EXECUTE OP FREE LEADER", l_r->id);
                 break;
             case OP_WRITE:
-                debug("EXECUTE OP WRITE LEADER", n->id);
-                execute_write(n, l_r);
+                debug("EXECUTE OP WRITE LEADER", l_r->id);
+                execute_write(l_r);
                 break;
             case OP_READ:
-                debug("EXECUTE OP READ LEADER", n->id);
-                execute_read(n, l_r);
+                debug("EXECUTE OP READ LEADER", l_r->id);
+                execute_read(l_r);
                 break;
             case OP_DUMP:
                 break;
@@ -298,7 +302,7 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
         get_command(l_r, terminal_id);
         // debug("COMMANDS LISTEN DONE", n->id);
         // Execute Commands
-        execute_command(n, l_r);
+        execute_command(l_r);
         // debug("COMMANDS EXEC DONE", n->id);
         // Break on death
         if (die == 1)
