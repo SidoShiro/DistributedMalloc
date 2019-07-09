@@ -10,6 +10,7 @@
 #include <mpi.h>
 #include <stdint.h>
 #include <communication.h>
+#include <string.h>
 
 size_t get_message_size() {
     return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
@@ -262,37 +263,54 @@ void execute_read(struct leader_resources *l_r) {
         return;
     }
 
-    // Readed bytes
-    char *read_buff = NULL;
+    // Buffer of all READS bytes
+    char *read_buff = malloc(sizeof(char) * (d_r->size + 1));
 
     // 2 Get the block to write to (Warning to multiple parts allocation)
     //                             (Warning to size bigger than block)
     size_t to_write_address_v = d_r->address;
     size_t nb_read = 0;
+    size_t nb_read_size = 0;
+    size_t x = d_r->size;
+    size_t offset = 0;
     for (size_t i = part_s; i < c_a->number_parts; i++) {
         // TODO handle size overflow
-
-
         struct block *b = c_a->parts[i];
-        // compute size to write for this block
-        size_t to_read_size = d_r->size - b->size;
-        d_r->size -= to_read_size;
-        // compute local address to write
-        size_t local_address = b->virtual_address - to_write_address_v;
-        to_write_address_v += local_address;
+        // compute size to read for this block
+        size_t to_read_size = 0;
+        if (x <= b->size) {
+            to_read_size = x;
+            x = 0;
+        } else {
+            x -= b->size;
+            to_read_size = b->size;
+        }
 
+        // compute local address to write
+        size_t local_address = 0;
+        if (b->virtual_address == to_write_address_v) {
+            local_address = 0;
+            to_write_address_v += to_read_size;
+        } else {
+            local_address += to_write_address_v - b->virtual_address;
+            to_write_address_v += to_read_size;
+        }
+
+        nb_read_size += to_read_size;
         // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
         struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 5, MPI_COMM_WORLD);
+        debug("Send OP Read", l_r->id);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        void *buff = malloc(sizeof(char) * (to_read_size + 1));
+        MPI_Status st;
+        MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
+        memcpy((void*)(read_buff + (offset * sizeof(char))), buff, to_read_size);
+        offset += to_read_size;
         nb_read++;
+        free(m);
     }
-
-    // 4 Receive bytes, append data from all nodes
-    for (size_t i = 0; i < nb_read; i++) {
-        // MPI_Irecv()
-    }
-    (void) read_buff;
-
+    debug("READ AND ASSEMBLED", l_r->id);
+    debug_n(read_buff, l_r->id, d_r->size);
 }
 
 void execute_write(struct leader_resources *l_r) {
