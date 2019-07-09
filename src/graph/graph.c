@@ -35,6 +35,7 @@ struct adjacency_matrix* dot_reader(char* path) {
             }
 
             links[i] = val[0];
+
             links[i + 1] = val[1];
             i += 2;
             nb_links += 1;

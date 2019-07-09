@@ -59,6 +59,8 @@ int main(int argc, char **argv) {
                 leader_loop(n, DEF_NODE_USER, size - 1);
             }
 
+            node_cycle(n);
+
             /*
             while (1) {
                 // routine
