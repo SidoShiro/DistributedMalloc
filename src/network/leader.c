@@ -15,6 +15,18 @@ size_t get_message_size() {
     return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
 }
 
+
+size_t size_of_allocation(struct allocation *a) {
+    size_t size = 0;
+    if (!a)
+        return size;
+    for (size_t i = 0; i < a->number_parts; i++) {
+        size += a->parts[i]->size;
+    }
+    return size;
+}
+
+
 struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_address, size_t *part) {
     if (!l_r->leader_reg)
         return NULL;
