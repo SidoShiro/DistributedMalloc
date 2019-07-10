@@ -27,7 +27,7 @@ void write_on_node(struct node *n, size_t address, char *data, size_t size) {
         debug_n((char *) n->memory, n->id, n->size);
     }
     else {
-        // printf("aske_addr %zu, ask_mem %zu, size_mem %zu\n\n", address, size, n->size);
+        printf("aske_addr %zu, ask_mem %zu, size_mem %zu\n\n", address, size, n->size);
         debug("OP WRITE FAILED", n->id);
     }
 }
@@ -68,7 +68,7 @@ void node_cycle(struct node *n) {
                 size_t addr = m->address;
                 size_t size = m->size;
 
-                char *data = recieve_data(size, q, m->id_s);
+                char *data = recieve_data(size, q, m->id_s, NULL);
                 if (data == NULL){
                     debug("NOOT Recieved data", n->id);
                     // FIXME : What do we do then

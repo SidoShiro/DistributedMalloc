@@ -298,10 +298,18 @@ void execute_read(struct leader_resources *l_r, struct queue *queue) {
 
         nb_read_size += to_read_size;
         // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
-        struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
+        struct message *m = generate_message_a(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ, 1);
         debug("Send OP Read", l_r->id);
 
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+        //MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+        if (!send_safe_message(m, queue)) {
+            // FIXME: if !ret, look for his buddy
+            debug("node TIMEOUT", l_r->id);
+        }
+        if (queue->first->data != NULL) {
+            debug("CAUGHT AN UNEXPECTED MESSAGE", l_r->id);
+        }
+        
         void *buff = malloc(sizeof(char) * (to_read_size + 1));
         MPI_Status st;
         MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);

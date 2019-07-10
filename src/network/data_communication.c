@@ -7,10 +7,11 @@
 #include "debug.h"
 
 
-void *recieve_data(size_t size, struct queue *queue, unsigned source) {
+void *recieve_data(size_t size, struct queue *queue, unsigned source, void *data) {
 
     MPI_Request r_data;
-    void *data = calloc(1, size);
+    if (data == NULL)
+        data = calloc(1, size);
     MPI_Irecv(data, size, MPI_CHAR, source, TAG_DATA, MPI_COMM_WORLD, &r_data);
 
     MPI_Request r_msg;

@@ -28,6 +28,6 @@ struct message *receive_message(struct queue *message_queue);
  * All others messages recieved are put in the queue. If needed, a IS_ALIVE is send.
  * Return the wanted data, which was calloc.
  */
-void *recieve_data(size_t size, struct queue *queue, unsigned source);
+void *recieve_data(size_t size, struct queue *queue, unsigned source, void *data);
 
 #endif /* !DISTRIBUTEDMALLOC_COMMUNICATION_H */
