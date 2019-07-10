@@ -23,7 +23,7 @@ set(SRCS
     src/cli/user.c
     src/network/communication.c
     src/network/data_communication.c
-    src/utils/queue.c)
+    src/utils/queue.c src/network/leader_utils.c)
 
 
 set(MAIN src/main/main.c)
