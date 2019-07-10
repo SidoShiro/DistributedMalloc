@@ -46,12 +46,21 @@ int main(int argc, char **argv) {
         struct node *n = generate_node(rank, DEF_NODE_SIZE);
         int new_leader = 0;
         do {
+            // HERE WE KILL THE NODE 2
+            if (rank == 2)
+                break;
+
             n->isleader = 0;
             node_cycle(n);
             new_leader = leader_election(n->id, size);
-            //printf("NEW LEADER = %d\n", new_leader);
+            printf("NEW LEADER = %d\n", new_leader);
             if (new_leader == n->id) {
-                printf("NEW LEADER = %d\n", new_leader);
+
+                // HERE WE KILL THE NEW LEADER (only the first one)
+                if (new_leader == 1)
+                    break;
+
+
                 n->isleader = 1;
                 leader_loop(n, DEF_NODE_USER, size - 1);
             }

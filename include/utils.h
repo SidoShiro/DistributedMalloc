@@ -14,6 +14,4 @@ int fun();
 
 size_t len(char **array);
 
-void print_allocations_table(struct leader_resources *l_r);
-
 #endif //DISTRIBUTEDMALLOC_UTILS_H

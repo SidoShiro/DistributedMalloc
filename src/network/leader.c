@@ -1,77 +1,4 @@
-#include "node.h"
 #include "leader.h"
-#include "globals.h"
-#include "message.h"
-#include "debug.h"
-#include "utils.h"
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <mpi.h>
-#include <stdint.h>
-#include <communication.h>
-#include <string.h>
-
-size_t get_message_size() {
-    return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
-}
-
-struct address_search *search_at_address(size_t address, struct leader_resources *l_r) {
-    struct block_register *bs = l_r->leader_blks;
-    for (size_t i = 0; i < bs->nb_blocks; i++) {
-        struct block *b = bs->blks[i];
-        if (b->virtual_address >= address && b->virtual_address + b->size < address) {
-            struct address_search *add_s = malloc(sizeof(struct address_search));
-            add_s->size = b->size;
-            add_s->v_address = b->virtual_address;
-            add_s->n_address = b->node_address;
-            add_s->r_address = address;
-            add_s->id = b->id;
-            return add_s;
-        }
-    }
-    return NULL;
-}
-
-size_t size_of_allocation(struct allocation *a) {
-    size_t size = 0;
-    if (!a)
-        return size;
-    for (size_t i = 0; i < a->number_parts; i++) {
-        size += a->parts[i]->size;
-    }
-    return size;
-}
-
-
-struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_address, size_t *part) {
-    if (!l_r->leader_reg)
-        return NULL;
-    struct allocation_register *reg = l_r->leader_reg;
-    for (size_t i = 0; i < reg->count_alloc; i++) {
-        if (reg->allocs[i]) {
-            for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
-                if (reg->allocs[i]->parts[j]->virtual_address <= v_address
-                    && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > v_address) {
-                    *part = j;
-                    return reg->allocs[i];
-                }
-            }
-        }
-    }
-    return NULL;
-}
-
-struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
-    struct leader_resources *l_r = malloc(128);
-    l_r->leader_blks = init_nodes_same_size(nb_nodes, DEF_NODE_SIZE);
-    l_r->leader_command_queue = NULL;
-    l_r->leader_reg = generate_allocs(4);
-    l_r->id = id;
-    l_r->max_memory = nb_nodes * DEF_NODE_SIZE - (DEF_NODE_SIZE); // minus leader
-    l_r->availaible_memory = l_r->max_memory;
-    return l_r;
-}
 
 int free_memory(size_t address, struct leader_resources *l_r) {
     if (!l_r->leader_reg)
@@ -96,14 +23,7 @@ int free_memory(size_t address, struct leader_resources *l_r) {
     return 0;
 }
 
-/**
- * Allocated memory for the User, using free space of nodes
- * | X1 |     |  X2 | X1 |
- * @param size
- * @param l_r
- * @return 1 if okay, 0 if no blocks possible for this size
- */
-size_t alloc_memory(size_t size, struct leader_resources *l_r) {
+size_t single_part(size_t size, struct leader_resources *l_r) {
     if (size >= l_r->max_memory || size >= l_r->availaible_memory)
         return SIZE_MAX;
     struct block_register *blks = l_r->leader_blks;
@@ -111,16 +31,16 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     merge_free_block(blks);
     if (!blks && blks->nb_blocks > 0) {
         debug("ERROR not malloc blockS !!!", 0); //l_r->id);
-        return 999;
+        return SIZE_MAX;
     }
     // Single Part
     for (size_t i = 0; i < blks->nb_blocks; i++) {
         struct block *b = blks->blks[i];
         while (b != NULL) {
-            if (0 == b->free && b->id != l_r->id) {
+            if (0 == b->free && b->id != l_r->id && !is_in_dead_list(l_r, b->id)) {
                 if (size == b->size) {
                     b->free = 1;
-                    struct allocation *a = malloc(32 + sizeof(struct allocation));
+                    struct allocation *a = malloc(60 + sizeof(struct allocation));
                     a->number_parts = 1;
                     a->v_address_start = b->virtual_address;
                     a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
@@ -132,7 +52,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
                     b->free = 1;
                     b = split_block_u(b, size);
                     if (b) {
-                        struct allocation *a = malloc(32 + sizeof(struct allocation));
+                        struct allocation *a = malloc(60 + sizeof(struct allocation));
                         a->number_parts = 1;
                         a->v_address_start = b->virtual_address;
                         a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
@@ -148,33 +68,47 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
             b = b->next;
         }
     }
+    return SIZE_MAX;
+}
+
+size_t multiple_part(size_t size, struct leader_resources *l_r)  {
+    if (size >= l_r->max_memory || size >= l_r->availaible_memory)
+        return SIZE_MAX;
+    struct block_register *blks = l_r->leader_blks;
+    // Merge free blocks (reform big blocks after frees)
+    merge_free_block(blks);
+    if (!blks && blks->nb_blocks > 0) {
+        debug("ERROR not malloc blockS !!!", 0); //l_r->id);
+        return SIZE_MAX;
+    }
     // Multi - Parts
-    struct allocation *a = malloc(32 + sizeof(struct allocation));
+    struct allocation *a = malloc(60 + sizeof(struct allocation));
     a->number_parts = 0;
     a->parts = NULL;
     a->v_address_start = SIZE_MAX;
+    a->parts = malloc((200) * sizeof(struct allocation *));
     ssize_t m_size = size;
     size_t m_t_size = 0;
     for (size_t i = 0; i < blks->nb_blocks; i++) {
-        struct block *b = blks->blks[i];
-        while (b && b->id != l_r->id && m_size > 0) {
-            if (b->free == 0) {
-                b->free = 1;
-                if ((ssize_t) b->size >= m_size) {
-                    m_t_size = m_size;
-                    m_size = 0;
-                    b = split_block_u(b, m_t_size);
-                } else {
-                    m_t_size = m_size - b->size;
-                    m_size -= b->size;
+        if (blks->blks && blks->blks[i]) {
+            struct block *b = blks->blks[i];
+            while (b && b->id != l_r->id && m_size > 0) {
+                if (b && b->free == 0) {
+                    b->free = 1;
+                    if ((ssize_t) b->size >= m_size) {
+                        m_t_size = m_size;
+                        m_size = 0;
+                        b = split_block_u(b, m_t_size);
+                    } else {
+                        m_size -= b->size;
+                    }
+                    if (a->v_address_start == SIZE_MAX)
+                        a->v_address_start = b->virtual_address;
+                    a->number_parts++;
+                    a->parts[a->number_parts - 1] = b;
                 }
-                if (a->v_address_start == SIZE_MAX)
-                    a->v_address_start = b->virtual_address;
-                a->number_parts++;
-                a->parts = realloc(a->parts, 34 + (a->number_parts * sizeof(struct allocation *)));
-                a->parts[a->number_parts - 1] = b;
+                b = b->next;
             }
-            b = b->next;
         }
         if (m_size <= 0) {
             add_allocation(l_r->leader_reg, a);
@@ -183,6 +117,22 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
         }
     }
     return SIZE_MAX;
+}
+
+/**
+ * Allocated memory for the User, using free space of nodes
+ * | X1 |     |  X2 | X1 |
+ * @param size
+ * @param l_r
+ * @return 1 if okay, 0 if no blocks possible for this size
+ */
+size_t alloc_memory(size_t size, struct leader_resources *l_r) {
+    size_t t = single_part(size, l_r);
+    if (t == SIZE_MAX) {
+        return multiple_part(size, l_r);
+    } else {
+        return t;
+    }
 }
 
 
@@ -271,6 +221,20 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 n_command->data = NULL;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
+            case OP_KILL: {
+                debug("Leader recv OP KILL from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = generate_data_id(m->id_o);
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
+            }
+            case OP_REVIVE: {
+                debug("Leader recv OP KILL from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = generate_data_id(m->id_o);
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
+            }
             default:
                 debug("Leader recv ANY OP from User", l_r->id);
                 break;
@@ -350,39 +314,40 @@ void execute_read(struct leader_resources *l_r) {
     size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
         struct block *b = c_a->parts[i];
+        if (!is_in_dead_list(l_r, b->id)) {
+            // compute local address to write
+            size_t local_address = 0;
+            if (b->virtual_address == to_write_address_v) {
+                local_address = b->node_address;
+            } else {
+                local_address += to_write_address_v - b->virtual_address + b->node_address;
+            }
 
-        // compute local address to write
-        size_t local_address = 0;
-        if (b->virtual_address == to_write_address_v) {
-            local_address = b->node_address;
-        } else {
-            local_address += to_write_address_v - b->virtual_address + b->node_address;
+            // compute size to write for this block
+            size_t to_read_size = 0;
+            size_t b_size_with_offset = b->size - (local_address - b->node_address);
+            if (x <= b_size_with_offset) {
+                to_read_size = x;
+                x = 0;
+            } else {
+                x -= b_size_with_offset;
+                to_read_size = b_size_with_offset;
+            }
+
+            to_write_address_v += to_read_size;
+            nb_read_size += to_read_size;
+            // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
+            struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
+            debug("Send OP Read", l_r->id);
+            MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+            void *buff = malloc(sizeof(char) * (to_read_size + 1));
+            MPI_Status st;
+            MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
+            memcpy((void *) (read_buff + (offset * sizeof(char))), buff, to_read_size);
+            offset += to_read_size;
+            nb_read++;
+            free(m);
         }
-
-        // compute size to write for this block
-        size_t to_read_size = 0;
-        size_t b_size_with_offset = b->size - (local_address - b->node_address);
-        if (x <= b_size_with_offset) {
-            to_read_size = x;
-            x = 0;
-        } else {
-            x -= b_size_with_offset;
-            to_read_size = b_size_with_offset;
-        }
-
-        to_write_address_v += to_read_size;
-        nb_read_size += to_read_size;
-        // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
-        struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
-        debug("Send OP Read", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
-        void *buff = malloc(sizeof(char) * (to_read_size + 1));
-        MPI_Status st;
-        MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
-        memcpy((void *) (read_buff + (offset * sizeof(char))), buff, to_read_size);
-        offset += to_read_size;
-        nb_read++;
-        free(m);
     }
     debug("READ AND ASSEMBLED", l_r->id);
     //  debug_n(read_buff, l_r->id, nb_read_size);
@@ -419,50 +384,47 @@ void execute_write(struct leader_resources *l_r) {
     size_t offset = 0;
     for (size_t i = part_s; x > 0 && i < c_a->number_parts; i++) {
         struct block *b = c_a->parts[i];
+        if (!is_in_dead_list(l_r, b->id)) {
+            // compute local address to write
+            size_t local_address = 0;
+            if (b->virtual_address == to_write_address_v) {
+                local_address = b->node_address;
+            } else {
+                local_address += to_write_address_v - b->virtual_address + b->node_address;
+            }
 
-        // compute local address to write
-        size_t local_address = 0;
-        if (b->virtual_address == to_write_address_v) {
-            local_address = b->node_address;
-        } else {
-            local_address += to_write_address_v - b->virtual_address + b->node_address;
+            // compute size to write for this block
+            size_t to_write_size = 0;
+            size_t b_size_with_offset = b->size - (local_address - b->node_address);
+            if (x <= b_size_with_offset) {
+                to_write_size = x;
+                x = 0;
+            } else {
+                x -= b_size_with_offset;
+                to_write_size = b_size_with_offset;
+            }
+
+            to_write_address_v += to_write_size;
+
+            // struct queue *q = queue_init();
+            // printf("Size to send for Write %zu\n\n", to_write_size);
+            // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
+            struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
+            debug("Send Write OP", l_r->id);
+            MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+            struct message m2;
+            MPI_Status st;
+            MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD, &st);
+            debug("Send Data", l_r->id);
+            // debug_n(d_w->data, l_r->id, d_w->size);
+            MPI_Send((void *) ((char *) d_w->data + offset), to_write_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD);
+            offset += to_write_size;
         }
-
-        // compute size to write for this block
-        size_t to_write_size = 0;
-        size_t b_size_with_offset = b->size - (local_address - b->node_address);
-        if (x <= b_size_with_offset) {
-            to_write_size = x;
-            x = 0;
-        } else {
-            x -= b_size_with_offset;
-            to_write_size = b_size_with_offset;
-        }
-
-        to_write_address_v += to_write_size;
-
-        // struct queue *q = queue_init();
-        // printf("Size to send for Write %zu\n\n", to_write_size);
-        // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
-        struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
-        debug("Send Write OP", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
-        struct message m2;
-        MPI_Status st;
-        MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD, &st);
-        debug("Send Data", l_r->id);
-        // debug_n(d_w->data, l_r->id, d_w->size);
-        MPI_Send((void *) ((char *) d_w->data + offset), to_write_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD);
-        offset += to_write_size;
     }
 
     if (x > 0) {
         debug("Write asked is overflowing the allocated block", l_r->id);
     }
-
-    // TODO Confirmation ?
-    // struct message *m = generate_message(n->id, )
-    // MPI_Isend()
 }
 
 void execute_dump(struct leader_resources *l_r) {
@@ -496,10 +458,33 @@ void execute_dump(struct leader_resources *l_r) {
 }
 
 void execute_dump_all(struct leader_resources *l_r) {
-    (void) l_r;
+    struct allocation_register *a_r = l_r->leader_reg;
+    for (size_t i = 0; i < a_r->count_alloc; i++) {
+        struct allocation *c_a = a_r->allocs[i];
+        if (c_a) {
+            size_t offset = 0;
+            size_t a_size = size_of_allocation(c_a);
+            char *dump = malloc(sizeof(char) * (a_size + 2));
+            for (size_t i_ = 0; i_ < c_a->number_parts; i_++) {
+                struct block *b = c_a->parts[i];
+                struct message *m = generate_message(l_r->id, b->id, b->id, b->node_address, b->size, OP_READ);
+                debug("Send Read OP", l_r->id);
+                MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+                void *buff = malloc(sizeof(char) * (b->size + 1));
+                MPI_Status st;
+                MPI_Recv(buff, b->size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
+                memcpy((void *) (dump + (offset * sizeof(char))), buff, b->size);
+                offset += b->size;
+            }
+
+            // Dump done
+            debug("Dump :", l_r->id);
+            debug_n(dump, l_r->id, a_size + 1);
+        }
+    }
 }
 
-void execute_command(struct leader_resources *l_r) {
+void execute_command(struct leader_resources *l_r, int *die) {
     while (l_r->leader_command_queue && peek_user_command(l_r->leader_command_queue) != OP_NONE) {
 
         switch (peek_user_command(l_r->leader_command_queue)) {
@@ -536,10 +521,28 @@ void execute_command(struct leader_resources *l_r) {
                 break;
             case OP_SNAP:
                 break;
-            case OP_KILL:
+            case OP_KILL: {
+                struct data_id *id = peek_command(l_r->leader_command_queue);
+                printf("KILL %u\n", id->id);
+                fflush(0);
+                add_dead(l_r, id->id);
+                if (id->id == l_r->id) {
+                    debug("KILL LEADER __", id->id);
+                    *die = 1;
+                }
+                else {
+                    struct message *m_kill = generate_message(l_r->id, id->id, 0, 0, 0, OP_KILL);
+                    MPI_Send(m_kill, sizeof(struct message), MPI_BYTE, id->id, TAG_MSG, MPI_COMM_WORLD);
+                }
                 break;
-            case OP_REVIVE:
+            }
+            case OP_REVIVE: {
+                struct data_id *id = peek_command(l_r->leader_command_queue);
+                rm_dead(l_r, id->id);
+                struct message *m_revive = generate_message(l_r->id, id->id, 0, 0, 0, OP_REVIVE);
+                MPI_Send(m_revive, sizeof(struct message), MPI_BYTE, id->id, TAG_REVIVE, MPI_COMM_WORLD);
                 break;
+            }
             case OP_NONE:
                 break;
             case OP_OK:
@@ -559,16 +562,16 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
     debug("START LEADER LOOP", n->id);
     struct leader_resources *l_r = generate_leader_resources(nb_nodes, n->id);
 
-    int die = -1;
+    int die = 0;
     while (1) {
         // Get command from user
         get_command(l_r, terminal_id);
-        debug("COMMANDS LISTEN DONE", n->id);
         // Execute Commands
-        execute_command(l_r);
-        debug("COMMANDS EXEC DONE", n->id);
+        execute_command(l_r, &die);
         // Break on death
-        if (die == 1)
-            break;
+        if (die) {
+            n->is_dead = 1;
+            return;
+        }
     }
 }

@@ -37,11 +37,30 @@ default is 20.
 
 # Todo
 
-* command line
-* graph loading
-  * from .dot (network and capacities of each node)
-  * map generation
-* leader election
+* New features
+* Byzantine
+* Snap
+
+## Command Line of dmalloc
+
+dmalloc commands:
+
+| **Command**                   | **Desc.**                                               |
+| h                             | display all available commands with their description   |
+| t                             | show table of allocations                               |
+| m `size`                      | return `address` to cmd user of the required allocation |
+| f `address`                   | free address, Warning if already free                   |
+| w `address` `datasize` `data` | write at the address the data of size datasize          |
+| w `address` `file`            | write all content of file at address                    |
+| w `address` `file` `datasize` | write datasize bytes from file to the address           |
+| r `address` `datasize`        | read datasize bytes at address                          |
+| r `address` `file`            | read all bytes of the block at address into file        |
+| r `address` `file` `datasize` | read datasize bytes at address into file                |
+| d `address`                   | dump in as text all data of the block stored in address |
+| d net                         | dump all allocation                                     |
+| kill `node_id`                | kill node refered by `id`                               |
+| revive `node_id`              | revive `id`                                             |
+
 
 ## Important structs/classes
 
@@ -76,22 +95,6 @@ default is 20.
     * size
     * id (the machine containing this address)
     
-## Command Line
-
-| **Command**                       | **Desc.**                                               |
-|-----------------------------------|---------------------------------------------------------|
-| h                                 | display all available commands with their description   |
-| m `size`                          | return `address` to cmd user of the required allocation |
-| f `address`                       | free address, Warning if already free                   |
-| w `address` `datasize` `data`     | write at the address the data of size datasize          |
-| r `address` `datasize`            | read datasize bytes at address                          |
-| d `address`                       | dump in as text all data of the block stored in address |
-| d `address` `file`                | dump address data in file                               |
-| snap                              | give user a snap of the network (print)                 |
-| snap `file`                       | same as snap but stored in file                         |
-| dnet                              | write a .dot file of the network                        |
-| kill `id`                         | kill node refered by `id`                               |
-| revive `id`                       | revive `id`                                             |
 
 ## Node Life Cycles
 

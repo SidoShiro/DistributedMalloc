@@ -98,12 +98,8 @@ void execute(char **args, unsigned short leader) {
                " r `address` `file` `datasize` | read datasize bytes at address into file                |\n"
                " d `address`                   | dump in as text all data of the block stored in address |\n"
                " d net                         | dump all allocation                                     |\n"
-               " d `address` `file`            | dump address data in file                               |\n"
-               " snap                          | give user a snap of the network (print)                 |\n"
-               " snap `file`                   | same as snap but stored in file                         |\n"
-               " dnet                          | write a .dot file of the network                        |\n"
-               " kill `id`                     | kill node refered by `id`                               |\n"
-               " revive `id`                   | revive `id`                                             |\n"
+               " kill `node_id`                | kill node refered by `id`                               |\n"
+               " revive `node_id`              | revive `id`                                             |\n"
                "\n");
     } else if (0 == strcmp(args[0], "m")) {
         // ERRORS
@@ -207,7 +203,8 @@ void execute(char **args, unsigned short leader) {
     } else if (0 == strcmp(args[0], "r")) {
         // ERRORS
         if (l <= 2) {
-            error_msg("r requires 2-3 arguments : 'address' and 'datasize'\n OR 'address' 'file'\n OR 'address' 'file' 'datasize");
+            error_msg(
+                    "r requires 2-3 arguments : 'address' and 'datasize'\n OR 'address' 'file'\n OR 'address' 'file' 'datasize");
             return;
         } else if (l >= 5) {
             error_msg("r do not support more than 2-3 arguments, check command h");
@@ -293,28 +290,6 @@ void execute(char **args, unsigned short leader) {
         } else {
             error_msg("w require an argument 'address' which can be casted as a positive integer");
         }
-    } else if (0 == strcmp(args[0], "snap")) {
-        // ERRORS
-        if (l <= 3) {
-            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
-            return;
-        } else if (l >= 5) {
-            error_msg("w do not support more than 3 arguments, check command h");
-            return;
-        }
-
-        // Execution
-        size_t address = 0;
-        size_t datasize = 0;
-        if (1 == sscanf(args[1], "%zu", &address)) {
-            if (1 == sscanf(args[2], "%zu", &datasize)) {
-                printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
-            } else {
-                error_msg("w require an argument 'datasize' which can be casted as a positive integer");
-            }
-        } else {
-            error_msg("w require an argument 'address' which can be casted as a positive integer");
-        }
     } else if (0 == strcmp(args[0], "t")) {
         // ERRORS
         if (l != 1) {
@@ -323,27 +298,43 @@ void execute(char **args, unsigned short leader) {
         }
         send_command(OP_TABLE, NULL, leader);
 
-    } else if (0 == strcmp(args[0], "w")) {
+    } else if (0 == strcmp(args[0], "kill")) {
         // ERRORS
-        if (l <= 3) {
-            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
+        if (l <= 1) {
+            error_msg("kill require 1 arguments : 'node_id'");
             return;
-        } else if (l >= 5) {
-            error_msg("w do not support more than 3 arguments, check command h");
+        } else if (l >= 3) {
+            error_msg("kill do not support more than 1 argument, check command h");
             return;
         }
 
         // Execution
-        size_t address = 0;
-        size_t datasize = 0;
-        if (1 == sscanf(args[1], "%zu", &address)) {
-            if (1 == sscanf(args[2], "%zu", &datasize)) {
-                printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
-            } else {
-                error_msg("w require an argument 'datasize' which can be casted as a positive integer");
-            }
+        size_t id = 0;
+        if (1 == sscanf(args[1], "%zu", &id)) {
+            struct data_id *d_i = generate_data_id(id);
+            printf("Execute Kill on %zu \n", id);
+            send_command(OP_KILL, d_i, leader);
         } else {
-            error_msg("w require an argument 'address' which can be casted as a positive integer");
+            error_msg("k require an argument 'node_id' which can be casted as a positive integer");
+        }
+    } else if (0 == strcmp(args[0], "revive")) {
+        // ERRORS
+        if (l <= 1) {
+            error_msg("revive require 1 arguments : 'node_id'");
+            return;
+        } else if (l >= 3) {
+            error_msg("revive do not support more than 1 argument, check command h");
+            return;
+        }
+
+        // Execution
+        size_t id = 0;
+        if (1 == sscanf(args[1], "%zu", &id)) {
+            struct data_id *d_i = generate_data_id(id);
+            printf("Execute Revive on %zu \n", id);
+            send_command(OP_REVIVE, d_i, leader);
+        } else {
+            error_msg("revive require an argument 'node_id' which can be casted as a positive integer");
         }
     } else {
         error_msg("command not found, see 'h' for help");

@@ -9,6 +9,7 @@ struct node {
     unsigned short id;
     unsigned char isleader; // 1 = is Leader, 0 = no
     // map; // From .dot file
+    unsigned char is_dead;
     size_t size;
     char *memory;
 };
