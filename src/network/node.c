@@ -51,10 +51,28 @@ void read_on_node(struct node *n, size_t address, char *data, size_t size) {
 
 void wait_if_dead(struct node *n) {
     while (n->is_dead) {
+        debug("WAITING FOR REVIVE", n->id);
         struct message m;
         MPI_Recv(&m, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_REVIVE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (m.op == OP_REVIVE)
+        if (m.op == OP_REVIVE) {
+            debug("REVIVE __", n->id);
             n->is_dead = 0;
+            int f = 0;
+            MPI_Request request;
+            do {
+                struct message bin;
+                MPI_Irecv(&bin, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, &request);
+                MPI_Test(&request, &f, MPI_STATUS_IGNORE);
+            } while (f);
+            MPI_Cancel(&request);
+            f = 0;
+            do {
+                struct message bin;
+                MPI_Irecv(&bin, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_ELECTION, MPI_COMM_WORLD, &request);
+                MPI_Test(&request, &f, MPI_STATUS_IGNORE);
+            } while (f);
+            MPI_Cancel(&request);
+        }
     }
 }
 
@@ -95,6 +113,7 @@ void node_cycle(struct node *n) {
                 free(data);
                 break;
             case OP_KILL:
+                debug("KILLED __", n->id);
                 n->is_dead = 1;
                 break;
             default:

@@ -208,8 +208,7 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
             case OP_REVIVE: {
                 debug("Leader recv OP KILL from User", l_r->id);
                 n_command->command = m->op;
-                struct data_id *id = calloc(1, sizeof(struct data_id));
-                n_command->data = id;
+                n_command->data = generate_data_id(m->id_o);
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             }
@@ -504,8 +503,10 @@ void execute_command(struct leader_resources *l_r, int *die) {
                 printf("KILL %u\n", id->id);
                 fflush(0);
                 add_dead(l_r, id->id);
-                if (id->id == l_r->id)
+                if (id->id == l_r->id) {
+                    debug("KILL LEADER __", id->id);
                     *die = 1;
+                }
                 else {
                     struct message *m_kill = generate_message(l_r->id, id->id, 0, 0, 0, OP_KILL);
                     MPI_Send(m_kill, sizeof(struct message), MPI_BYTE, id->id, TAG_MSG, MPI_COMM_WORLD);

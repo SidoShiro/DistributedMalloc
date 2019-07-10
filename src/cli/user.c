@@ -149,7 +149,7 @@ void send_kill(struct data_id *data, unsigned short leader) {
 
 void send_revive(struct data_id *data, unsigned short leader) {
     struct message *m = generate_message(USER_NODE, leader, data->id, 0, 0, OP_REVIVE);
-    MPI_Send(m, sizeof(struct message), MPI_BYTE, leader, TAG_REVIVE, MPI_COMM_WORLD);
+    MPI_Send(m, sizeof(struct message), MPI_BYTE, leader, TAG_MSG, MPI_COMM_WORLD);
     free(m);
 }
 
