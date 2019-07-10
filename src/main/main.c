@@ -37,37 +37,24 @@ int main(int argc, char **argv) {
     if (rank == DEF_NODE_USER) {
         printf("starting %d processes\n", size);
         debug("Start User", DEF_NODE_USER);
-        start_cli();
+        start_cli(size);
     }
     else
     {
         debug("Start Node", rank);
 
-        //if (rank != 1) {
-
-            unsigned leader = leader_election(rank, size);
-
-            printf("Node %u finished election. Leader is: %u\n", rank, leader);
-        
-            // Node Creation
-            struct node *n = generate_node(rank, DEF_NODE_SIZE);
-            // Form rank number !
-        
-            // Start Leader !
-            if (n->id == leader) {
+        struct node *n = generate_node(rank, DEF_NODE_SIZE);
+        int new_leader = 0;
+        do {
+            n->isleader = 0;
+            node_cycle(n);
+            new_leader = leader_election(n->id, size);
+            printf("NEW LEADER = %d\n", new_leader);
+            if (new_leader == n->id) {
                 n->isleader = 1;
                 leader_loop(n, DEF_NODE_USER, size - 1);
             }
-
-            node_cycle(n);
-
-            /*
-            while (1) {
-                // routine
-            }
-            */
-        //}
-
+        } while (new_leader);
     }
 
     MPI_Finalize();
