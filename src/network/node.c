@@ -82,7 +82,7 @@ void node_cycle(struct node *n) {
         wait_if_dead(n);
         // cycle of node
         struct message *m = receive_message(q, TAG_MSG);
-        debug("Recv OP", n->id);
+        //debug("Recv OP", n->id);
         switch (m->op) {
             case OP_START_LEADER:
                 queue_free(q);

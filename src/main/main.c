@@ -49,8 +49,9 @@ int main(int argc, char **argv) {
             n->isleader = 0;
             node_cycle(n);
             new_leader = leader_election(n->id, size);
-            printf("NEW LEADER = %d\n", new_leader);
+            //printf("NEW LEADER = %d\n", new_leader);
             if (new_leader == n->id) {
+                printf("NEW LEADER = %d\n", new_leader);
                 n->isleader = 1;
                 leader_loop(n, DEF_NODE_USER, size - 1);
             }
