@@ -25,8 +25,8 @@ void write_on_node(struct node *n, size_t address, char *data, size_t size) {
     if (address + size <= n->size) {
         void *mem_op_ptr = (n->memory + address);
         memcpy((void *) mem_op_ptr, (void *) data, size);
-        debug("Write done of :", n->id);
-        debug_n((char *) n->memory, n->id, n->size);
+        debug("Write done", n->id);
+        // debug_n((char *) n->memory, n->id, n->size);
     } else {
         // printf("aske_addr %zu, ask_mem %zu, size_mem %zu\n\n", address, size, n->size);
         debug("OP WRITE FAILED", n->id);
