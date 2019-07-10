@@ -31,17 +31,19 @@ void print_allocations_table(struct leader_resources *l_r) {
     size_t total_size = 0;
     for (size_t i = 0; i < a_r->count_alloc; i++) {
         size = 0;
-        for (size_t j = 0; j < a_r->allocs[i]->number_parts; j++) {
-            size += a_r->allocs[i]->parts[j]->size;
-            total_size += a_r->allocs[i]->parts[j]->size;
-        }
-        printf("%4zu : %9zu : %5zu : %8zu : "
-               , i, a_r->allocs[i]->v_address_start, a_r->allocs[i]->number_parts, size);
-        for (size_t j = 0; j < a_r->allocs[i]->number_parts; j++) {
-            if (j == a_r->allocs[i]->number_parts - 1)
-                printf("%d\n", a_r->allocs[i]->parts[j]->id);
-            else
-                printf("%d > ", a_r->allocs[i]->parts[j]->id);
+        if (a_r->allocs[i]) {
+            for (size_t j = 0; j < a_r->allocs[i]->number_parts; j++) {
+                size += a_r->allocs[i]->parts[j]->size;
+                total_size += a_r->allocs[i]->parts[j]->size;
+            }
+            printf("%4zu : %9zu : %5zu : %8zu : ", i, a_r->allocs[i]->v_address_start, a_r->allocs[i]->number_parts,
+                   size);
+            for (size_t j = 0; j < a_r->allocs[i]->number_parts; j++) {
+                if (j == a_r->allocs[i]->number_parts - 1)
+                    printf("%d\n", a_r->allocs[i]->parts[j]->id);
+                else
+                    printf("%d > ", a_r->allocs[i]->parts[j]->id);
+            }
         }
     }
     printf(" ===   =========   =====   ========   =======\n");
