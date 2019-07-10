@@ -421,7 +421,30 @@ void execute_dump(struct leader_resources *l_r) {
 }
 
 void execute_dump_all(struct leader_resources *l_r) {
-    (void) l_r;
+    struct allocation_register *a_r = l_r->leader_reg;
+    for (size_t i = 0; i < a_r->count_alloc; i++) {
+        struct allocation *c_a = a_r->allocs[i];
+        if (c_a) {
+            size_t offset = 0;
+            size_t a_size = size_of_allocation(c_a);
+            char *dump = malloc(sizeof(char) * (a_size + 2));
+            for (size_t i = 0; i < c_a->number_parts; i++) {
+                struct block *b = c_a->parts[i];
+                struct message *m = generate_message(l_r->id, b->id, b->id, b->node_address, b->size, OP_READ);
+                debug("Send Read OP", l_r->id);
+                MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+                void *buff = malloc(sizeof(char) * (b->size + 1));
+                MPI_Status st;
+                MPI_Recv(buff, b->size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
+                memcpy((void *) (dump + (offset * sizeof(char))), buff, b->size);
+                offset += b->size;
+            }
+
+            // Dump done
+            debug("Dump :", l_r->id);
+            debug_n(dump, l_r->id, a_size + 1);
+        }
+    }
 }
 
 void execute_command(struct leader_resources *l_r) {
@@ -488,10 +511,8 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
     while (1) {
         // Get command from user
         get_command(l_r, terminal_id);
-        debug("COMMANDS LISTEN DONE", n->id);
         // Execute Commands
         execute_command(l_r);
-        debug("COMMANDS EXEC DONE", n->id);
         // Break on death
         if (die == 1)
             break;
