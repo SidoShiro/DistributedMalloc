@@ -30,7 +30,7 @@ set(MAIN src/main/main.c)
 
 set(TEST_MAIN test/main_test.c)
 
-set(FAILURE_DEMO src/main/main_election_with_failures.c)
+set(FAILURE_DEMO src/demo/main_election_with_failures.c)
 
 
 include_directories("include/")
