@@ -70,21 +70,48 @@ void send_read(void *data, unsigned short leader) {
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
                                          d_r->address, d_r->size, OP_READ);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_CHAR, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
 
-    // TODO RECV Read data !
-    MPI_Status st;
-    MPI_Request r2;
-    void *buff = malloc(sizeof(char) * (d_r->size + 1));
-    MPI_Irecv(buff, d_r->size * sizeof(char), MPI_CHAR, leader, 0, MPI_COMM_WORLD, &r2);
-    while (0 != MPI_Wait(&r, &st)) {
-        char *c_buff = buff;
-        c_buff[d_r->size] = '\0';
-        char *msg = "Read : ";
-        strcat(msg, c_buff);
-        debug(msg, DEF_NODE_USER);
-    }
+    struct message m2;
+    MPI_Status st2;
+    MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &st2);
+    debug("RECV OK with datasize read", 0);
+    size_t real_data_size = m2.size;
+    MPI_Status st3;
+    char *r_data = malloc(sizeof(char) * (2 + real_data_size));
+    MPI_Recv((void*)r_data, real_data_size * sizeof(char), MPI_BYTE, leader, 0, MPI_COMM_WORLD, &st3);
+    debug("Read:", 0);
+    r_data[real_data_size + 1] = '\0';
+    debug_n(r_data, 0, real_data_size);
     free(m);
+}
+
+void send_read_file(void *data, unsigned short leader) {
+    MPI_Request r;
+    // MPI_Status st;
+    struct data_write *d_r = data;
+    if (d_r->size == 0)
+        d_r->size = 40000;
+
+    struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
+                                         d_r->address, d_r->size, OP_READ);
+
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+
+    struct message *m2 = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
+                                          d_r->address, d_r->size, OP_READ);
+    MPI_Status st2;
+    MPI_Recv(m2, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &st2);
+    debug("RECV OK with datasize read", 0);
+    size_t real_data_size = m2->size;
+    MPI_Status st3;
+    d_r->data = malloc(sizeof(char) * (2 +real_data_size));
+    d_r->size = real_data_size;
+    debug("Read Recv Data", 0);
+    MPI_Recv(d_r->data, real_data_size * sizeof(char), MPI_BYTE, leader, 0, MPI_COMM_WORLD, &st3);
+    printf("Data Read :: %zu", d_r->size);
+    free(m);
+    free(m2);
 }
 
 void send_dump(void *data, unsigned short leader) {
@@ -133,6 +160,10 @@ void send_command(enum operation op, void *data, unsigned short leader) {
         case OP_DUMP_ALL:
             debug("Send Dump All", 0);
             send_dump_all(leader);
+            break;
+        case OP_READ_FILE:
+            debug("Send Read (file)", 0);
+            send_read_file(data, leader);
             break;
         default:
             break;

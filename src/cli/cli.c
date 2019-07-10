@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <globals.h>
 #include <debug.h>
+#include <sys/stat.h>
 #include "cli.h"
 #include "communication.h"
 
@@ -141,8 +142,9 @@ void execute(char **args, unsigned short leader) {
         }
     } else if (0 == strcmp(args[0], "w")) {
         // ERRORS
-        if (l <= 3) {
-            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
+        if (l <= 2) {
+            error_msg(
+                    "w require 2-3 arguments : 'address', 'datasize' and 'data'\n OR 'address' 'file' + 'datasize' optional, check h");
             return;
         } else if (l >= 5) {
             error_msg("w do not support more than 3 arguments, check command h");
@@ -159,7 +161,36 @@ void execute(char **args, unsigned short leader) {
                 send_command(OP_WRITE, d_w, leader);
                 free(d_w);
             } else {
-                error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
+                // Write from File
+                FILE *file_write = fopen(args[2], "r");
+                if (!file_write) {
+                    error_msg("w 'address' 'file', file was not possible to open, or doesn't exist");
+                    return;
+                }
+                struct stat st;
+                /*get the size using stat()*/
+                if (stat(args[2], &st) != 0)
+                    return;
+                if (l == 4) {
+                    // file max data read
+                    if (1 == sscanf(args[3], "%zu", &datasize)) {
+                        if ((ssize_t) datasize >= st.st_size)
+                            datasize = st.st_size;
+                    } else {
+                        error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
+                        return;
+                    }
+                } else {
+                    datasize = st.st_size;
+                }
+                // Now read datasize
+                char *buffer_write_file = malloc(sizeof(char) * (2 + datasize));
+                size_t r_c = fread(buffer_write_file, sizeof(char), datasize, file_write);
+                if (r_c != datasize)
+                    error_msg("WARNING: file bytes read different from bytes asked");
+                struct data_write *d_w = generate_data_write(address, datasize, buffer_write_file);
+                send_command(OP_WRITE, d_w, leader);
+                // OLD error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
             }
         } else {
             error_msg("w requires an argument 'address' which can be casted as a positive integer");
@@ -167,10 +198,10 @@ void execute(char **args, unsigned short leader) {
     } else if (0 == strcmp(args[0], "r")) {
         // ERRORS
         if (l <= 2) {
-            error_msg("r requires 2 arguments : 'address' and 'datasize'");
+            error_msg("r requires 2-3 arguments : 'address' and 'datasize'\n OR 'address' 'file'\n OR 'address' 'file' 'datasize");
             return;
-        } else if (l >= 4) {
-            error_msg("r do not support more than 2 arguments, check command h");
+        } else if (l >= 5) {
+            error_msg("r do not support more than 2-3 arguments, check command h");
             return;
         }
 
@@ -184,7 +215,38 @@ void execute(char **args, unsigned short leader) {
                 send_command(OP_READ, d_r, leader);
                 free(d_r);
             } else {
-                error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
+                // Read to File
+                FILE *file_read = fopen(args[2], "w");
+                if (!file_read) {
+                    error_msg("r 'address' 'file', file was not possible to open, or doesn't exist");
+                    return;
+                }
+                struct stat st;
+                if (stat(args[2], &st) != 0)
+                    return;
+                if (l == 4) {
+                    // file max data read
+                    if (1 == sscanf(args[3], "%zu", &datasize)) {
+                        if ((ssize_t) datasize >= st.st_size)
+                            datasize = st.st_size;
+                    } else {
+                        error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
+                        return;
+                    }
+                } else {
+                    datasize = st.st_size;
+                }
+                // Now read datasize bytes
+                char *buffer_read_file = NULL;
+                struct data_write *d_w = generate_data_write(address, datasize, buffer_read_file);
+                send_command(OP_READ_FILE, d_w, leader);
+                // /!\ buffer_read_file was allocated in send_command
+                debug("Write data in file (READ OP)", 0);
+                printf("Data Read :: %zu", d_w->size);
+                size_t r_c = fwrite(d_w->data, sizeof(char), d_w->size, file_read);
+                if (r_c != d_w->size)
+                    error_msg("WARNING: file bytes write different from bytes asked");
+                // OLD error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
             }
         } else {
             error_msg("r require an argument 'address' which can be casted as a positive integer");
@@ -288,8 +350,7 @@ void execute(char **args, unsigned short leader) {
         } else {
             error_msg("w require an argument 'address' which can be casted as a positive integer");
         }
-    }
-    else {
+    } else {
         error_msg("command not found, see 'h' for help");
     }
 
