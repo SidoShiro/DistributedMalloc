@@ -66,6 +66,11 @@ struct allocation_register *generate_allocs(size_t size_alloc) {
 }
 
 void add_allocation(struct allocation_register *a_r, struct allocation *a) {
+    for (size_t i = 0; i < a_r->count_alloc; i++)
+        if (a_r->allocs[i] == NULL) {
+            a_r->allocs[i] = a;
+            return;
+        }
     if (a_r->count_alloc >= a_r->size_alloc) {
         a_r->allocs[a_r->count_alloc] = a;
     } else {
