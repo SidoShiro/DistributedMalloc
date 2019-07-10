@@ -141,8 +141,26 @@ void send_dump_all(unsigned short leader) {
     free(m);
 }
 
+void send_kill(struct data_id *data, unsigned short leader) {
+    struct message *m = generate_message(USER_NODE, leader, data->id, 0, 0, OP_KILL);
+    MPI_Send(m, sizeof(struct message), MPI_BYTE, leader, TAG_MSG, MPI_COMM_WORLD);
+    free(m);
+}
+
+void send_revive(struct data_id *data, unsigned short leader) {
+    struct message *m = generate_message(USER_NODE, leader, data->id, 0, 0, OP_REVIVE);
+    MPI_Send(m, sizeof(struct message), MPI_BYTE, leader, TAG_REVIVE, MPI_COMM_WORLD);
+    free(m);
+}
+
 void send_command(enum operation op, void *data, unsigned short leader) {
     switch (op) {
+        case OP_REVIVE:
+            send_revive(data, leader);
+            break;
+        case OP_KILL:
+            send_kill(data, leader);
+            break;
         case OP_OK:
             break;
         case OP_MALLOC:

@@ -17,6 +17,7 @@ struct node *generate_node(unsigned short id, size_t size) {
     }
     n->memory[size] = '\0';
     n->isleader = 0;
+    n->is_dead = 0;
     return n;
 }
 
@@ -48,9 +49,19 @@ void read_on_node(struct node *n, size_t address, char *data, size_t size) {
     }
 }
 
+void wait_if_dead(struct node *n) {
+    while (n->is_dead) {
+        struct message m;
+        MPI_Recv(&m, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_REVIVE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (m.op == OP_REVIVE)
+            n->is_dead = 0;
+    }
+}
+
 void node_cycle(struct node *n) {
     struct queue *q = queue_init();
     while (1) {
+        wait_if_dead(n);
         // cycle of node
         struct message *m = receive_message(q, TAG_MSG);
         debug("Recv OP", n->id);
@@ -82,6 +93,9 @@ void node_cycle(struct node *n) {
                 debug("Send Read: Data", n->id);
                 MPI_Send(data, m->size, MPI_BYTE, m->id_s, TAG_DATA, MPI_COMM_WORLD);
                 free(data);
+                break;
+            case OP_KILL:
+                n->is_dead = 1;
                 break;
             default:
                 break;

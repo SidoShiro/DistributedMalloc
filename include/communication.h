@@ -11,6 +11,7 @@
 #define TAG_MSG 3
 #define TAG_DATA 4
 #define TAG_ELECTION 5
+#define TAG_REVIVE 6
 
 /*
  * Send the given message 'm' to the destination node
