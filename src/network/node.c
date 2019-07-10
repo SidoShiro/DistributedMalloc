@@ -48,28 +48,29 @@ void read_on_node(struct node *n, size_t address, char *data, size_t size) {
     }
 }
 
-int node_cycle(struct node *n) {
+void node_cycle(struct node *n) {
+    struct queue *q = queue_init();
     while (1) {
         // cycle of node
-        struct queue *q = queue_init();
         struct message *m = receive_message(q);
         debug("Recv OP", n->id);
         switch (m->op) {
             case OP_START_LEADER:
                 queue_free(q);
                 free(m);
-                return leader_election(n->id, n->size);
+                debug("START LEADER ELECTION", n->id);
+                return;
             case OP_OK:
                 break;
             case OP_WRITE: {
                 debug("Write OP : send OK", n->id);
                 struct message *mW = generate_message(n->id, m->id_s, n->id, 0, 0, OP_OK);
-                MPI_Send(mW, sizeof(struct message), MPI_BYTE, mW->id_t, 3, MPI_COMM_WORLD);
+                MPI_Send(mW, sizeof(struct message), MPI_BYTE, mW->id_t, TAG_MSG, MPI_COMM_WORLD);
                 size_t addr = m->address;
                 size_t size = m->size;
                 char *data = malloc(size * sizeof(char));
                 MPI_Status st3;
-                MPI_Recv(data, size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD, &st3);
+                MPI_Recv(data, size, MPI_BYTE, m->id_s, TAG_DATA, MPI_COMM_WORLD, &st3);
                 write_on_node(n, addr, data, size);
                 free(data);
             }
@@ -79,7 +80,7 @@ int node_cycle(struct node *n) {
                 char *data = malloc(m->size * sizeof(char));
                 read_on_node(n, m->address, data, m->size);
                 debug("Send Read: Data", n->id);
-                MPI_Send(data, m->size, MPI_BYTE, m->id_s, 4, MPI_COMM_WORLD);
+                MPI_Send(data, m->size, MPI_BYTE, m->id_s, TAG_DATA, MPI_COMM_WORLD);
                 free(data);
                 break;
             default:

@@ -15,6 +15,6 @@ struct node {
 
 struct node *generate_node(unsigned short id, size_t size);
 
-int node_cycle(struct node *n);
+void node_cycle(struct node *n);
 
 #endif /* !DISTRIBUTEDMALLOC_NODE_H */

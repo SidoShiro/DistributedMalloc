@@ -363,8 +363,9 @@ unsigned short start_leader_election(unsigned size) {
     struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
     MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     debug("Got Leader !", DEF_NODE_USER);
+    unsigned short leader = m->id_o;
     free(m);
-    return m->id_o;
+    return leader;
 }
 
 void start_cli(unsigned size) {
