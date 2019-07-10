@@ -356,25 +356,19 @@ void execute(char **args, unsigned short leader) {
 
 }
 
-unsigned short start_leader_election(unsigned size) {
-    struct message *b = generate_message(0, 0, 0, 0, 0, OP_START_LEADER);
-    broadcast_message(b, 0, size);
-    free(b);
+unsigned short get_leader() {
     struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
     MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     debug("Got Leader !", DEF_NODE_USER);
-    unsigned short leader = m->id_o;
-    free(m);
-    return leader;
+    return m->id_o;
 }
 
-void start_cli(unsigned size) {
+void start_cli() {
     int no_quit = 1;
     char *cmd;
     char **args;
 
-    struct queue *q = queue_init();
-    unsigned short leader = start_leader_election(size);
+    unsigned short leader = get_leader();
 
     while (no_quit) {
         fflush(0);
@@ -390,10 +384,7 @@ void start_cli(unsigned size) {
         }
 
         // DEBUG print_args(args);
-        struct message *m_verif = generate_message_a(0, leader, 0, 0, 0, OP_IS_ALIVE, 1);
-        if (!send_safe_message(m_verif, q))
-            leader = start_leader_election(size);
-        free(m_verif);
+
         execute(args, leader);
 
         free(cmd);
