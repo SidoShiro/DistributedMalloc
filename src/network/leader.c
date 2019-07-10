@@ -324,7 +324,14 @@ void execute_read(struct leader_resources *l_r) {
         free(m);
     }
     debug("READ AND ASSEMBLED", l_r->id);
-    debug_n(read_buff, l_r->id, d_r->size);
+    debug_n(read_buff, l_r->id, nb_read_size);
+    // Send Result Read to User
+    debug("Send to User OK + Data Read size", l_r->id);
+    struct message *mU = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, 0, nb_read_size, OP_OK);
+    MPI_Send(mU, sizeof(struct message), MPI_BYTE, mU->id_t, 0, MPI_COMM_WORLD);
+    debug("Send to User Assemebled Read Data", l_r->id);
+    MPI_Send(read_buff, nb_read_size, MPI_BYTE, mU->id_t, 0, MPI_COMM_WORLD);
+    free(mU);
 }
 
 void execute_write(struct leader_resources *l_r) {
