@@ -52,7 +52,7 @@ void node_cycle(struct node *n) {
     struct queue *q = queue_init();
     while (1) {
         // cycle of node
-        struct message *m = receive_message(q);
+        struct message *m = receive_message(q, TAG_MSG);
         debug("Recv OP", n->id);
         switch (m->op) {
             case OP_START_LEADER:

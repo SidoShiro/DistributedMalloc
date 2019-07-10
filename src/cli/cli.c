@@ -353,7 +353,7 @@ void execute(char **args, unsigned short leader) {
 
 unsigned short start_leader_election(unsigned size) {
     struct message *b = generate_message(0, 0, 0, 0, 0, OP_START_LEADER);
-    broadcast_message(b, 0, size);
+    broadcast_message(b, 0, size, TAG_MSG);
     free(b);
     struct message *m = generate_message(0, 0, 0, 0, 0, OP_NONE);
     MPI_Recv(m, sizeof(*m), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -386,7 +386,7 @@ void start_cli(unsigned size) {
 
         // DEBUG print_args(args);
         struct message *m_verif = generate_message_a(0, leader, 0, 0, 0, OP_IS_ALIVE, 1);
-        if (!send_safe_message(m_verif, q))
+        if (!send_safe_message(m_verif, q, TAG_MSG))
             leader = start_leader_election(size);
         free(m_verif);
         execute(args, leader);

@@ -20,12 +20,12 @@ unsigned leader_election(unsigned id, unsigned network_size) {
             leader = new_leader;
             struct message *m_send = generate_message_a(id, next, leader, 0, 0, OP_LEADER, 1);
             //printf("id:%u next:%u leader:%u op:%u\n", m_send->id_s, m_send->id_t, m_send->id_o, m_send->op);
-            while (!send_safe_message(m_send, message_queue)) {
+            while (!send_safe_message(m_send, message_queue, TAG_ELECTION)) {
                 debug("TIMEOUT", id);
                 if (next == leader) {
                     debug("LEADER IS DEAD, STARTING AGAIN", id);
                     struct message *m_again = generate_message(id, 0, leader, 0, 0, OP_LEADER_AGAIN);
-                    broadcast_message(m_again, id, network_size);
+                    broadcast_message(m_again, id, network_size, TAG_ELECTION);
                     free(m_again);
                     free(m_send);
                     return leader_election(id, network_size); // TODO: Check if it works + fix leaks
@@ -43,7 +43,7 @@ unsigned leader_election(unsigned id, unsigned network_size) {
             free(m_send);
         }
         //debug("safe message sent", id);
-        struct message *m_receive = receive_message(message_queue);
+        struct message *m_receive = receive_message(message_queue, TAG_ELECTION);
 
         if (m_receive->op == OP_LEADER_OK) {
             queue_free(message_queue);
@@ -62,7 +62,7 @@ unsigned leader_election(unsigned id, unsigned network_size) {
             if (m_receive->id_o == id) {
                 // send LEADER OK
                 struct message *m_ok = generate_message(id, 0, leader, 0, 0, OP_LEADER_OK);
-                broadcast_message(m_ok, id, network_size);
+                broadcast_message(m_ok, id, network_size, TAG_ELECTION);
                 free(m_ok);
 
                 // send leader to user
