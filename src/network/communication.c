@@ -13,7 +13,7 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
     struct message *m_recv = calloc(1, sizeof(struct message));
     MPI_Request r_ok;
     int f_ok = 0;
-    MPI_Irecv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &r_ok);
+    MPI_Irecv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, &r_ok);
 
     struct timespec waiting_time;
     waiting_time.tv_sec = 0;
@@ -35,7 +35,7 @@ int send_safe_message(struct message *m_send, struct queue *queue) {
             }
             queue_push_back(queue, m_recv);
             m_recv = calloc(1, sizeof(struct message));
-            MPI_Irecv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &r_ok);
+            MPI_Irecv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, &r_ok);
         }
         nanosleep(&waiting_time, NULL);
     }
@@ -52,7 +52,7 @@ struct message *receive_message(struct queue *message_queue) {
     }
     m_recv = calloc(1, sizeof(struct message));
     // What if m_recv->op = OP_ALIVE ?
-    MPI_Recv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(m_recv, sizeof(struct message), MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     debug("queue empty, receive message", m_recv->id_t);
     if (m_recv->need_callback) {
         debug("send callback", m_recv->id_t);
