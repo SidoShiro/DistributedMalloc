@@ -81,6 +81,7 @@ int free_memory(size_t address, struct leader_resources *l_r) {
         for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
             if (reg->allocs[i]->parts[j]->virtual_address <= address
                 && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > address) {
+                l_r->availaible_memory += size_of_allocation(reg->allocs[i]);
                 // Set all block of this alloc as free
                 for (j = 0; j < reg->allocs[i]->number_parts; j++) {
                     reg->allocs[i]->parts[j]->free = 0;
