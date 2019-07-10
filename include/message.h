@@ -9,6 +9,7 @@ enum operation {
     OP_FREE,
     OP_WRITE,
     OP_READ,
+    OP_READ_FILE,
     OP_SNAP,
     OP_LEADER,
     OP_WHOISLEADER,
