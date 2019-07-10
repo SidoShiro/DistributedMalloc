@@ -27,7 +27,19 @@ void add_block(struct block *blk, unsigned short id, size_t size, size_t node_ad
     (void) blk;
 }
 
-void merge_free_block(struct block_register *blks);
+void merge_free_block(struct block_register *blks) {
+    for (size_t i = 0; i < blks->nb_blocks; i++) {
+        struct block *b = blks->blks[i];
+        while (b && b->next) {
+            if (b->free == 0 && b->next->free == 0) {
+                b->size = b->size + b->next->size;
+                b->next = b->next->next;
+            } else {
+                b = b->next;
+            }
+        }
+    }
+}
 
 struct block_register *init_nodes_same_size(unsigned short nb_nodes, size_t size) {
     struct block_register *blks = generate_blocks(nb_nodes);
