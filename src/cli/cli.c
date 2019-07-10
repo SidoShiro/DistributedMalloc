@@ -88,7 +88,11 @@ void execute(char **args, unsigned short leader) {
                " m `size`                      | return `address` to cmd user of the required allocation |\n"
                " f `address`                   | free address, Warning if already free                   |\n"
                " w `address` `datasize` `data` | write at the address the data of size datasize          |\n"
+               " w `address` `file`            | write all content of file at address                    |\n"
+               " w `address` `file` `datasize` | write datasize bytes from file to the address           |\n"
                " r `address` `datasize`        | read datasize bytes at address                          |\n"
+               " r `address` `file`            | read all bytes of the block at address into file        |\n"
+               " r `address` `file` `datasize` | read datasize bytes at address into file                |\n"
                " d `address`                   | dump in as text all data of the block stored in address |\n"
                " d net                         | dump all allocation                                     |\n"
                " d `address` `file`            | dump address data in file                               |\n"
@@ -284,6 +288,9 @@ void execute(char **args, unsigned short leader) {
         } else {
             error_msg("w require an argument 'address' which can be casted as a positive integer");
         }
+    }
+    else {
+        error_msg("command not found, see 'h' for help");
     }
 
 }
