@@ -87,6 +87,7 @@ void execute(char **args, unsigned short leader) {
     if (0 == strcmp(args[0], "h")) {
         printf("dmalloc commands:\n"
                " h                             | display all available commands with their description   |\n"
+               " t                             | show table of allocations                               |\n"
                " m `size`                      | return `address` to cmd user of the required allocation |\n"
                " f `address`                   | free address, Warning if already free                   |\n"
                " w `address` `datasize` `data` | write at the address the data of size datasize          |\n"
@@ -138,6 +139,9 @@ void execute(char **args, unsigned short leader) {
         size_t address = 0;
         if (1 == sscanf(args[1], "%zu", &address)) {
             printf("Execute Free of address : %zu\n", address);
+            struct data_address *d_a = generate_data_address(address);
+            send_command(OP_FREE, d_a, leader);
+            free(d_a);
         } else {
             error_msg("f  require an argument 'address' which can be casted as a positive integer");
         }
@@ -157,6 +161,10 @@ void execute(char **args, unsigned short leader) {
         size_t datasize = 0;
         if (1 == sscanf(args[1], "%zu", &address)) {
             if (1 == sscanf(args[2], "%zu", &datasize)) {
+                if (args[3] == NULL) {
+                    error_msg("w cannot write nothing");
+                    return;
+                }
                 printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
                 struct data_write *d_w = generate_data_write(address, datasize, args[3]);
                 send_command(OP_WRITE, d_w, leader);
@@ -307,28 +315,14 @@ void execute(char **args, unsigned short leader) {
         } else {
             error_msg("w require an argument 'address' which can be casted as a positive integer");
         }
-    } else if (0 == strcmp(args[0], "w")) {
+    } else if (0 == strcmp(args[0], "t")) {
         // ERRORS
-        if (l <= 3) {
-            error_msg("w require 3 arguments : 'address', 'datasize' and 'data'");
-            return;
-        } else if (l >= 5) {
-            error_msg("w do not support more than 3 arguments, check command h");
+        if (l != 1) {
+            error_msg("t require no arguments");
             return;
         }
+        send_command(OP_TABLE, NULL, leader);
 
-        // Execution
-        size_t address = 0;
-        size_t datasize = 0;
-        if (1 == sscanf(args[1], "%zu", &address)) {
-            if (1 == sscanf(args[2], "%zu", &datasize)) {
-                printf("Execute Write at %zu of %s : %zu bytes\n", address, args[3], datasize);
-            } else {
-                error_msg("w require an argument 'datasize' which can be casted as a positive integer");
-            }
-        } else {
-            error_msg("w require an argument 'address' which can be casted as a positive integer");
-        }
     } else if (0 == strcmp(args[0], "w")) {
         // ERRORS
         if (l <= 3) {

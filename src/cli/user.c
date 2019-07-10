@@ -23,6 +23,25 @@ void send_write(void *data, unsigned short leader) {
     free(m);
 }
 
+void send_free(void *data, unsigned short leader) {
+    // MPI_Status st;
+    struct data_address *d_a = data;
+    struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
+                                         d_a->address, 0, OP_FREE);
+
+    MPI_Send((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD);
+    free(m);
+}
+
+void send_table(unsigned short leader) {
+    // MPI_Status st;
+    struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
+                                         0, 0, OP_TABLE);
+
+    MPI_Send((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD);
+    free(m);
+}
+
 void send_malloc(void *data, unsigned short leader) {
     // MPI_Status st;
     struct data_size *d_s = data;
@@ -129,6 +148,14 @@ void send_command(enum operation op, void *data, unsigned short leader) {
         case OP_MALLOC:
             debug("Send Malloc", 0);
             send_malloc(data, leader);
+            break;
+        case OP_FREE:
+            debug("Send Free", 0);
+            send_free(data, leader);
+            break;
+        case OP_TABLE:
+            debug("Send Table", 0);
+            send_table(leader);
             break;
         case OP_WRITE:
             debug("Send Write", 0);

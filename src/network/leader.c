@@ -16,6 +16,22 @@ size_t get_message_size() {
     return (sizeof(unsigned short) * 3 + 2 * sizeof(size_t) + sizeof(enum operation));
 }
 
+struct address_search *search_at_address(size_t address, struct leader_resources *l_r) {
+    struct block_register *bs = l_r->leader_blks;
+    for (size_t i = 0; i < bs->nb_blocks; i++) {
+        struct block *b = bs->blks[i];
+        if (b->virtual_address >= address && b->virtual_address + b->size < address) {
+            struct address_search *add_s = malloc(sizeof(struct address_search));
+            add_s->size = b->size;
+            add_s->v_address = b->virtual_address;
+            add_s->n_address = b->node_address;
+            add_s->r_address = address;
+            add_s->id = b->id;
+            return add_s;
+        }
+    }
+    return NULL;
+}
 
 size_t size_of_allocation(struct allocation *a) {
     size_t size = 0;
@@ -33,13 +49,13 @@ struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_add
         return NULL;
     struct allocation_register *reg = l_r->leader_reg;
     for (size_t i = 0; i < reg->count_alloc; i++) {
-        for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
-            // FIXME check if its ok
-            printf("%zu == %zu  \n\n", v_address, reg->allocs[i]->parts[j]->virtual_address);
-            if (reg->allocs[i]->parts[j]->virtual_address <= v_address
-                && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > v_address) {
-                *part = j;
-                return reg->allocs[i];
+        if (reg->allocs[i]) {
+            for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
+                if (reg->allocs[i]->parts[j]->virtual_address <= v_address
+                    && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > v_address) {
+                    *part = j;
+                    return reg->allocs[i];
+                }
             }
         }
     }
@@ -57,6 +73,28 @@ struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
     return l_r;
 }
 
+int free_memory(size_t address, struct leader_resources *l_r) {
+    if (!l_r->leader_reg)
+        return 0;
+    struct allocation_register *reg = l_r->leader_reg;
+    for (size_t i = 0; i < reg->count_alloc; i++) {
+        for (size_t j = 0; j < reg->allocs[i]->number_parts; j++) {
+            if (reg->allocs[i]->parts[j]->virtual_address <= address
+                && reg->allocs[i]->parts[j]->virtual_address + reg->allocs[i]->parts[j]->size > address) {
+                // Set all block of this alloc as free
+                for (j = 0; j < reg->allocs[i]->number_parts; j++) {
+                    reg->allocs[i]->parts[j]->free = 0;
+                }
+                free(reg->allocs[i]->parts);
+                free(reg->allocs[i]);
+                reg->allocs[i] = NULL;
+                return 0;
+            }
+        }
+    }
+    return 0;
+}
+
 /**
  * Allocated memory for the User, using free space of nodes
  * | X1 |     |  X2 | X1 |
@@ -68,6 +106,8 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     if (size >= l_r->max_memory || size >= l_r->availaible_memory)
         return SIZE_MAX;
     struct block_register *blks = l_r->leader_blks;
+    // Merge free blocks (reform big blocks after frees)
+    merge_free_block(blks);
     if (!blks && blks->nb_blocks > 0) {
         debug("ERROR not malloc blockS !!!", 0); //l_r->id);
         return 999;
@@ -139,23 +179,6 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     return SIZE_MAX;
 }
 
-struct address_search *search_at_address(size_t address, struct leader_resources *l_r) {
-    struct block_register *bs = l_r->leader_blks;
-    for (size_t i = 0; i < bs->nb_blocks; i++) {
-        struct block *b = bs->blks[i];
-        if (b->virtual_address >= address && b->virtual_address + b->size < address) {
-            struct address_search *add_s = malloc(sizeof(struct address_search));
-            add_s->size = b->size;
-            add_s->v_address = b->virtual_address;
-            add_s->n_address = b->node_address;
-            add_s->r_address = address;
-            add_s->id = b->id;
-            return add_s;
-        }
-    }
-    return NULL;
-}
-
 
 void get_command(struct leader_resources *l_r, unsigned short user) {
     // int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
@@ -207,6 +230,11 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 n_command->data = d_r;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
+            case OP_TABLE:
+                debug("Leader recv OP TABLE", l_r->id);
+                print_allocations_table(l_r);
+                fflush(0);
+                break;
             case OP_MALLOC:
                 debug("Leader recv OP MALLOC from User", l_r->id);
                 n_command->command = m->op;
@@ -215,12 +243,20 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 n_command->data = d_s;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
+            case OP_FREE:
+                debug("Leader recv OP FREE from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                struct data_address *d_a_free = generate_data_address(m->address);
+                n_command->data = d_a_free;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
             case OP_DUMP:
                 debug("Leader recv OP DUMP from User", l_r->id);
                 n_command->command = m->op;
                 n_command->data = NULL;
-                struct data_address *d_a = generate_data_address(m->address);
-                n_command->data = d_a;
+                struct data_address *d_a_dump = generate_data_address(m->address);
+                n_command->data = d_a_dump;
                 l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
                 break;
             case OP_DUMP_ALL:
@@ -270,6 +306,19 @@ void execute_malloc(struct leader_resources *l_r) {
     MPI_Request r;
     MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
     free(m);
+}
+
+void execute_free(struct leader_resources *l_r) {
+    struct data_address *d_a = peek_command(l_r->leader_command_queue);
+    if (!d_a) {
+        debug("ERROR allocation data_size for OP MALLOC execution [LEADER]", l_r->id);
+        return;
+    }
+    int yes = free_memory(d_a->address, l_r);
+    if (yes)
+        debug("Free operation successful", l_r->id);
+    else
+        debug("Free operation was invalid", l_r->id);
 }
 
 void execute_read(struct leader_resources *l_r) {
@@ -461,6 +510,7 @@ void execute_command(struct leader_resources *l_r) {
                 break;
             case OP_FREE:
                 debug("EXECUTE OP FREE LEADER", l_r->id);
+                execute_free(l_r);
                 break;
             case OP_WRITE:
                 debug("EXECUTE OP WRITE LEADER", l_r->id);
@@ -503,19 +553,8 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
     debug("START LEADER LOOP", n->id);
     struct leader_resources *l_r = generate_leader_resources(nb_nodes, n->id);
 
-    /*
-    // MPI_Isend();
-    int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
-                  MPI_Comm comm, MPI_Request *request)
-    // MPI_Irecv();
-    // MPI_Wait();
-    // MPI_Test();
-    int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
-                  int tag, MPI_Comm comm, MPI_Request *request);
-    */
     int die = -1;
     while (1) {
-        print_allocations_table(l_r);
         // Get command from user
         get_command(l_r, terminal_id);
         debug("COMMANDS LISTEN DONE", n->id);
