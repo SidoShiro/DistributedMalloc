@@ -25,7 +25,6 @@ void send_write(void *data, unsigned short leader) {
 }
 
 void send_malloc(void *data, unsigned short leader) {
-    debug("SEND MAAAALOC", 0);
     MPI_Request r;
     // MPI_Status st;
     struct data_size *d_s = data;
@@ -72,16 +71,16 @@ void send_read(void *data, unsigned short leader) {
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
                                          d_r->address, d_r->size, OP_READ);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
 
     struct message m2;
     MPI_Status st2;
-    MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &st2);
+    MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &st2);
     debug("RECV OK with datasize read", 0);
     size_t real_data_size = m2.size;
     MPI_Status st3;
     char *r_data = malloc(sizeof(char) * (2 + real_data_size));
-    MPI_Recv((void*)r_data, real_data_size * sizeof(char), MPI_BYTE, leader, 0, MPI_COMM_WORLD, &st3);
+    MPI_Recv((void*)r_data, real_data_size * sizeof(char), MPI_BYTE, leader, TAG_DATA, MPI_COMM_WORLD, &st3);
     debug("Read:", 0);
     r_data[real_data_size + 1] = '\0';
     debug_n(r_data, 0, real_data_size);
