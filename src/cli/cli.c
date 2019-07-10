@@ -98,9 +98,8 @@ void execute(char **args, unsigned short leader) {
                " r `address` `file` `datasize` | read datasize bytes at address into file                |\n"
                " d `address`                   | dump in as text all data of the block stored in address |\n"
                " d net                         | dump all allocation                                     |\n"
-               " d `address` `file`            | dump address data in file                               |\n"
-               " kill `id`                     | kill node refered by `id`                               |\n"
-               " revive `id`                   | revive `id`                                             |\n"
+               " kill `node_id`                | kill node refered by `id`                               |\n"
+               " revive `node_id`              | revive `id`                                             |\n"
                "\n");
     } else if (0 == strcmp(args[0], "m")) {
         // ERRORS
