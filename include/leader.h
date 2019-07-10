@@ -45,4 +45,8 @@ void add_dead(struct leader_resources *l_r, unsigned short id);
 
 void rm_dead(struct leader_resources *l_r, unsigned short id);
 
+int is_in_dead_list(struct leader_resources *l_r, unsigned short id);
+
+void print_allocations_table(struct leader_resources *l_r);
+
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */
