@@ -217,7 +217,7 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
     //free(buff);
 }
 
-void execute_malloc(struct leader_resources *l_r) {
+void execute_malloc(struct leader_resources *l_r, struct queue *queue) {
     struct data_size *d_s = peek_command(l_r->leader_command_queue);
     if (!d_s) {
         debug("ERROR allocation data_size for OP MALLOC execution [LEADER]", l_r->id);
@@ -252,7 +252,7 @@ void execute_malloc(struct leader_resources *l_r) {
     free(m);
 }
 
-void execute_read(struct leader_resources *l_r) {
+void execute_read(struct leader_resources *l_r, struct queue *queue) {
     struct data_read *d_r;
     d_r = peek_command(l_r->leader_command_queue);
 
@@ -300,10 +300,11 @@ void execute_read(struct leader_resources *l_r) {
         // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
         struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
         debug("Send OP Read", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
         void *buff = malloc(sizeof(char) * (to_read_size + 1));
         MPI_Status st;
-        MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
+        MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
         memcpy((void*)(read_buff + (offset * sizeof(char))), buff, to_read_size);
         offset += to_read_size;
         nb_read++;
@@ -313,7 +314,7 @@ void execute_read(struct leader_resources *l_r) {
     debug_n(read_buff, l_r->id, d_r->size);
 }
 
-void execute_write(struct leader_resources *l_r) {
+void execute_write(struct leader_resources *l_r, struct queue *queue) {
     // MPI_Request r;
     // MPI_Status st;
     struct data_write *d_w;
@@ -361,15 +362,23 @@ void execute_write(struct leader_resources *l_r) {
         // struct queue *q = queue_init();
         // printf("Size to send for Write %zu\n\n", to_write_size);
         // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
-        struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
+        struct message *m = generate_message_a(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE, 1);
         debug("Send Write OP", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        //MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
+        if (!send_safe_message(m, queue)) {
+            // FIXME: if !ret, look for his buddy 
+        }
+
+        if (queue->first->data != NULL) {
+            debug("CAUGHT AN UNEXPECTED MESSAGE", l_r->id);
+        }
+
         struct message m2;
         MPI_Status st;
-        MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD, &st);
+        MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD, &st);
         debug("Send Data", l_r->id);
         // debug_n(d_w->data, l_r->id, d_w->size);
-        MPI_Send((void*)((char*)d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        MPI_Send((void*)((char*)d_w->data + offset), to_write_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD);
         offset += to_write_size;
     }
 
@@ -378,28 +387,30 @@ void execute_write(struct leader_resources *l_r) {
     }
 
     // TODO Confirmation ?
-    // struct message *m = generate_message(n->id, )
+    // struct message *m = generate_message(n->id, )READ
     // MPI_Isend()
 }
 
 void execute_command(struct leader_resources *l_r) {
     if (peek_user_command(l_r->leader_command_queue) != OP_NONE) {
 
+        struct queue *queue = queue_init();
+
         switch (peek_user_command(l_r->leader_command_queue)) {
             case OP_MALLOC:
                 debug("EXECUTE OP MALLOC LEADER", l_r->id);
-                execute_malloc(l_r);
+                execute_malloc(l_r, queue);
                 break;
             case OP_FREE:
                 debug("EXECUTE OP FREE LEADER", l_r->id);
                 break;
             case OP_WRITE:
                 debug("EXECUTE OP WRITE LEADER", l_r->id);
-                execute_write(l_r);
+                execute_write(l_r, queue);
                 break;
             case OP_READ:
                 debug("EXECUTE OP READ LEADER", l_r->id);
-                execute_read(l_r);
+                execute_read(l_r, queue);
                 break;
             case OP_DUMP:
                 break;
