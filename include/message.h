@@ -10,6 +10,7 @@ enum operation {
     OP_WRITE,
     OP_READ,
     OP_READ_FILE,
+    OP_TABLE,
     OP_SNAP,
     OP_LEADER,
     OP_START_LEADER,
