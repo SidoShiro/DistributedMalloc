@@ -30,11 +30,16 @@ set(MAIN src/main/main.c)
 
 set(TEST_MAIN test/main_test.c)
 
+set(FAILURE_DEMO src/main/main_election_with_failures.c)
+
 
 include_directories("include/")
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
+
 add_executable(dmalloc ${SRCS} ${MAIN} ${MPI_C_LIBRARIES})
 
-include_directories("include/")
 add_executable(test_dmalloc ${SRCS} ${TEST_MAIN} ${MPI_C_LIBRARIES})
+
+add_executable(failure_demo ${SRCS} ${FAILURE_DEMO} ${MPI_C_LIBRARIES})
+
