@@ -106,6 +106,8 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     if (size >= l_r->max_memory || size >= l_r->availaible_memory)
         return SIZE_MAX;
     struct block_register *blks = l_r->leader_blks;
+    // Merge free blocks (reform big blocks after frees)
+    merge_free_block(blks);
     if (!blks && blks->nb_blocks > 0) {
         debug("ERROR not malloc blockS !!!", 0); //l_r->id);
         return 999;
@@ -508,7 +510,7 @@ void execute_command(struct leader_resources *l_r) {
                 break;
             case OP_FREE:
                 debug("EXECUTE OP FREE LEADER", l_r->id);
-                execute_malloc(l_r);
+                execute_free(l_r);
                 break;
             case OP_WRITE:
                 debug("EXECUTE OP WRITE LEADER", l_r->id);
@@ -551,16 +553,6 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
     debug("START LEADER LOOP", n->id);
     struct leader_resources *l_r = generate_leader_resources(nb_nodes, n->id);
 
-    /*
-    // MPI_Isend();
-    int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
-                  MPI_Comm comm, MPI_Request *request)
-    // MPI_Irecv();
-    // MPI_Wait();
-    // MPI_Test();
-    int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
-                  int tag, MPI_Comm comm, MPI_Request *request);
-    */
     int die = -1;
     while (1) {
         // Get command from user
