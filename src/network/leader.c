@@ -23,14 +23,7 @@ int free_memory(size_t address, struct leader_resources *l_r) {
     return 0;
 }
 
-/**
- * Allocated memory for the User, using free space of nodes
- * | X1 |     |  X2 | X1 |
- * @param size
- * @param l_r
- * @return 1 if okay, 0 if no blocks possible for this size
- */
-size_t alloc_memory(size_t size, struct leader_resources *l_r) {
+size_t single_part(size_t size, struct leader_resources *l_r) {
     if (size >= l_r->max_memory || size >= l_r->availaible_memory)
         return SIZE_MAX;
     struct block_register *blks = l_r->leader_blks;
@@ -75,33 +68,47 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
             b = b->next;
         }
     }
+    return SIZE_MAX;
+}
+
+size_t multiple_part(size_t size, struct leader_resources *l_r)  {
+    if (size >= l_r->max_memory || size >= l_r->availaible_memory)
+        return SIZE_MAX;
+    struct block_register *blks = l_r->leader_blks;
+    // Merge free blocks (reform big blocks after frees)
+    merge_free_block(blks);
+    if (!blks && blks->nb_blocks > 0) {
+        debug("ERROR not malloc blockS !!!", 0); //l_r->id);
+        return 999;
+    }
     // Multi - Parts
     struct allocation *a = malloc(60 + sizeof(struct allocation));
     a->number_parts = 0;
     a->parts = NULL;
     a->v_address_start = SIZE_MAX;
+    a->parts = malloc((200) * sizeof(struct allocation *));
     ssize_t m_size = size;
     size_t m_t_size = 0;
     for (size_t i = 0; i < blks->nb_blocks; i++) {
-        struct block *b = blks->blks[i];
-        while (b && b->id != l_r->id && m_size > 0) {
-            if (b->free == 0) {
-                b->free = 1;
-                if ((ssize_t) b->size >= m_size) {
-                    m_t_size = m_size;
-                    m_size = 0;
-                    b = split_block_u(b, m_t_size);
-                } else {
-                    m_t_size = m_size - b->size;
-                    m_size -= b->size;
+        if (blks->blks && blks->blks[i]) {
+            struct block *b = blks->blks[i];
+            while (b && b->id != l_r->id && m_size > 0) {
+                if (b && b->free == 0) {
+                    b->free = 1;
+                    if ((ssize_t) b->size >= m_size) {
+                        m_t_size = m_size;
+                        m_size = 0;
+                        b = split_block_u(b, m_t_size);
+                    } else {
+                        m_size -= b->size;
+                    }
+                    if (a->v_address_start == SIZE_MAX)
+                        a->v_address_start = b->virtual_address;
+                    a->number_parts++;
+                    a->parts[a->number_parts - 1] = b;
                 }
-                if (a->v_address_start == SIZE_MAX)
-                    a->v_address_start = b->virtual_address;
-                a->number_parts++;
-                a->parts = realloc(a->parts, (4 + a->number_parts) * sizeof(struct allocation *));
-                a->parts[a->number_parts - 1] = b;
+                b = b->next;
             }
-            b = b->next;
         }
         if (m_size <= 0) {
             add_allocation(l_r->leader_reg, a);
@@ -110,6 +117,22 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
         }
     }
     return SIZE_MAX;
+}
+
+/**
+ * Allocated memory for the User, using free space of nodes
+ * | X1 |     |  X2 | X1 |
+ * @param size
+ * @param l_r
+ * @return 1 if okay, 0 if no blocks possible for this size
+ */
+size_t alloc_memory(size_t size, struct leader_resources *l_r) {
+    size_t t = single_part(size, l_r);
+    if (t == SIZE_MAX) {
+        return multiple_part(size, l_r);
+    } else {
+        return t;
+    }
 }
 
 
