@@ -31,4 +31,6 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
 
 struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_address, size_t *part);
 
+size_t size_of_allocation(struct allocation *a);
+
 #endif /* !DISTRIBUTEDMALLOC_LEADER_H */

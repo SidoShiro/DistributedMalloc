@@ -154,14 +154,19 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
     a->parts = NULL;
     a->v_address_start = SIZE_MAX;
     ssize_t m_size = size;
+    size_t m_t_size = 0;
     for (size_t i = 0; i < blks->nb_blocks; i++) {
         struct block *b = blks->blks[i];
         while (b && b->id != l_r->id && m_size > 0) {
             if (b->free == 0) {
                 b->free = 1;
-                m_size -= b->size;
-                if (m_size < 0) {
-                    b = split_block_u(b, -1 * m_size);
+                if ((ssize_t) b->size >= m_size) {
+                    m_t_size = m_size;
+                    m_size = 0;
+                    b = split_block_u(b, m_t_size);
+                } else {
+                    m_t_size = m_size - b->size;
+                    m_size -= b->size;
                 }
                 if (a->v_address_start == SIZE_MAX)
                     a->v_address_start = b->virtual_address;
