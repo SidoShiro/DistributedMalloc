@@ -47,7 +47,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
             if (0 == b->free && b->id != l_r->id && !is_in_dead_list(l_r, b->id)) {
                 if (size == b->size) {
                     b->free = 1;
-                    struct allocation *a = malloc(32 + sizeof(struct allocation));
+                    struct allocation *a = malloc(60 + sizeof(struct allocation));
                     a->number_parts = 1;
                     a->v_address_start = b->virtual_address;
                     a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
@@ -59,7 +59,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
                     b->free = 1;
                     b = split_block_u(b, size);
                     if (b) {
-                        struct allocation *a = malloc(32 + sizeof(struct allocation));
+                        struct allocation *a = malloc(60 + sizeof(struct allocation));
                         a->number_parts = 1;
                         a->v_address_start = b->virtual_address;
                         a->parts = malloc(34 + (a->number_parts * sizeof(struct allocation *)));
@@ -76,7 +76,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
         }
     }
     // Multi - Parts
-    struct allocation *a = malloc(32 + sizeof(struct allocation));
+    struct allocation *a = malloc(60 + sizeof(struct allocation));
     a->number_parts = 0;
     a->parts = NULL;
     a->v_address_start = SIZE_MAX;
@@ -98,7 +98,7 @@ size_t alloc_memory(size_t size, struct leader_resources *l_r) {
                 if (a->v_address_start == SIZE_MAX)
                     a->v_address_start = b->virtual_address;
                 a->number_parts++;
-                a->parts = realloc(a->parts, 34 + (a->number_parts * sizeof(struct allocation *)));
+                a->parts = realloc(a->parts, (4 + a->number_parts) * sizeof(struct allocation *));
                 a->parts[a->number_parts - 1] = b;
             }
             b = b->next;

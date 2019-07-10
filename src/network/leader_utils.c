@@ -66,14 +66,14 @@ struct allocation *give_for_v_address(struct leader_resources *l_r, size_t v_add
 }
 
 struct leader_resources *generate_leader_resources(size_t nb_nodes, size_t id) {
-    struct leader_resources *l_r = malloc(128);
+    struct leader_resources *l_r = malloc(sizeof(struct leader_resources) + 200);
     l_r->leader_blks = init_nodes_same_size(nb_nodes, DEF_NODE_SIZE);
     l_r->leader_command_queue = NULL;
     l_r->leader_reg = generate_allocs(4);
     l_r->id = id;
     l_r->max_memory = nb_nodes * DEF_NODE_SIZE - (DEF_NODE_SIZE); // minus leader
     l_r->availaible_memory = l_r->max_memory;
-    l_r->dead_list = malloc(sizeof(struct dead_list) + 34);
+    l_r->dead_list = malloc(sizeof(struct dead_list) + 70);
     l_r->dead_list->dead_list = calloc(nb_nodes + 10, sizeof(unsigned short));
     l_r->dead_list->max = nb_nodes;
     return l_r;
