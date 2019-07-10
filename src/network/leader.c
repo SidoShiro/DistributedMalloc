@@ -31,7 +31,7 @@ size_t single_part(size_t size, struct leader_resources *l_r) {
     merge_free_block(blks);
     if (!blks && blks->nb_blocks > 0) {
         debug("ERROR not malloc blockS !!!", 0); //l_r->id);
-        return 999;
+        return SIZE_MAX;
     }
     // Single Part
     for (size_t i = 0; i < blks->nb_blocks; i++) {
@@ -79,7 +79,7 @@ size_t multiple_part(size_t size, struct leader_resources *l_r)  {
     merge_free_block(blks);
     if (!blks && blks->nb_blocks > 0) {
         debug("ERROR not malloc blockS !!!", 0); //l_r->id);
-        return 999;
+        return SIZE_MAX;
     }
     // Multi - Parts
     struct allocation *a = malloc(60 + sizeof(struct allocation));
