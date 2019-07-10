@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <communication.h>
 
 void send_write(void *data, unsigned short leader) {
     MPI_Request r;
@@ -16,27 +17,28 @@ void send_write(void *data, unsigned short leader) {
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
                                          d_w->address, d_w->size, OP_WRITE);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
 
     debug("Send Data For Write OP", 0);
-    MPI_Isend(d_w->data, d_w->size, MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend(d_w->data, d_w->size, MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
     free(m);
 }
 
 void send_malloc(void *data, unsigned short leader) {
+    debug("SEND MAAAALOC", 0);
     MPI_Request r;
     // MPI_Status st;
     struct data_size *d_s = data;
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
-                                         0, d_s->size, OP_MALLOC);
+                                         TAG_MSG, d_s->size, OP_MALLOC);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
 
     // TODO RECV Address !
     MPI_Status st;
     MPI_Request r2;
     void *buff = generate_message(0, 0, 0, 0, 0, OP_NONE);
-    MPI_Irecv(buff, sizeof(struct message), MPI_BYTE, leader, 0, MPI_COMM_WORLD, &r2);
+    MPI_Irecv(buff, sizeof(struct message), MPI_BYTE, leader, TAG_MSG, MPI_COMM_WORLD, &r2);
     /*
     while (0 != MPI_Wait(&r, &st)) {
         char *msg = "Address from malloc operation of size ";
@@ -70,13 +72,13 @@ void send_read(void *data, unsigned short leader) {
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
                                          d_r->address, d_r->size, OP_READ);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_CHAR, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_CHAR, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
 
     // TODO RECV Read data !
     MPI_Status st;
     MPI_Request r2;
     void *buff = malloc(sizeof(char) * (d_r->size + 1));
-    MPI_Irecv(buff, d_r->size * sizeof(char), MPI_CHAR, leader, 0, MPI_COMM_WORLD, &r2);
+    MPI_Irecv(buff, d_r->size * sizeof(char), MPI_CHAR, leader, TAG_MSG, MPI_COMM_WORLD, &r2);
     while (0 != MPI_Wait(&r, &st)) {
         char *c_buff = buff;
         c_buff[d_r->size] = '\0';
@@ -94,7 +96,7 @@ void send_dump(void *data, unsigned short leader) {
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
                                          d_a->address, 0, OP_DUMP);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
 
     free(m);
 }
@@ -105,7 +107,7 @@ void send_dump_all(unsigned short leader) {
     struct message *m = generate_message(DEF_NODE_USER, leader, DEF_NODE_LEADER,
                                          0, 0, OP_DUMP_ALL);
 
-    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
 
     free(m);
 }

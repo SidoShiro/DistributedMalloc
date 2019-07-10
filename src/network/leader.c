@@ -164,12 +164,18 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
     int count = sizeof(struct message);
     MPI_Request r;
     MPI_Status st;
-    MPI_Irecv(&buff, count, MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &r);
+    MPI_Irecv(&buff, count, MPI_BYTE, MPI_ANY_SOURCE, TAG_MSG, MPI_COMM_WORLD, &r);
 
     if (0 == MPI_Wait(&r, &st)) {
         struct message *m = &buff;
         struct command_queue *n_command = generate_command_queue(m->op, NULL);
         switch (m->op) {
+            case OP_IS_ALIVE:
+                debug("Leader recv OP IS ALIVE from User", l_r->id);
+                n_command->command = m->op;
+                n_command->data = NULL;
+                l_r->leader_command_queue = push_command(l_r->leader_command_queue, n_command);
+                break;
             case OP_OK:
                 if (m->id_s == 0) {
                     debug("Leader recv OP OK from User", l_r->id);
@@ -184,7 +190,7 @@ void get_command(struct leader_resources *l_r, unsigned short user) {
                 struct data_write *d_w = generate_data_write(m->address, m->size, NULL);
                 void *wbuff = malloc(sizeof(char) * (m->size + 2));
                 debug("Leader wait DATA from User for OP WRITE", l_r->id);
-                MPI_Irecv(wbuff, m->size * sizeof(char), MPI_BYTE, user, 0, MPI_COMM_WORLD, &r);
+                MPI_Irecv(wbuff, m->size * sizeof(char), MPI_BYTE, user, TAG_DATA, MPI_COMM_WORLD, &r);
                 if (0 == MPI_Wait(&r, &st)) {
                     d_w->data = wbuff;
                     n_command->data = d_w;
@@ -244,7 +250,7 @@ void execute_malloc(struct leader_resources *l_r) {
             debug("Out of memory", l_r->id);
             struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, SIZE_MAX, 0, OP_MALLOC);
             MPI_Request r;
-            MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+            MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
             free(m);
             return;
         }
@@ -254,7 +260,7 @@ void execute_malloc(struct leader_resources *l_r) {
         }
         struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, SIZE_MAX, SIZE_MAX, OP_MALLOC);
         MPI_Request r;
-        MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+        MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
         free(m);
         return;
     }
@@ -262,7 +268,7 @@ void execute_malloc(struct leader_resources *l_r) {
     printf("%zu of %zu bytes\n", v_addr, sss);
     struct message *m = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, v_addr, sss, OP_MALLOC);
     MPI_Request r;
-    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, 0, MPI_COMM_WORLD, &r);
+    MPI_Isend((void *) m, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &r);
     free(m);
 }
 
@@ -314,10 +320,10 @@ void execute_read(struct leader_resources *l_r) {
         // 3 Send READ OP to each node (Warning to the local address of the node, not the virtual)
         struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_read_size, OP_READ);
         debug("Send OP Read", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
         void *buff = malloc(sizeof(char) * (to_read_size + 1));
         MPI_Status st;
-        MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
+        MPI_Recv(buff, to_read_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
         memcpy((void *) (read_buff + (offset * sizeof(char))), buff, to_read_size);
         offset += to_read_size;
         nb_read++;
@@ -378,13 +384,13 @@ void execute_write(struct leader_resources *l_r) {
         // 3 Send Write OP to each node (Warning to the local address of the node, not the virtual)
         struct message *m = generate_message(l_r->id, b->id, b->id, local_address, to_write_size, OP_WRITE);
         debug("Send Write OP", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
         struct message m2;
         MPI_Status st;
-        MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD, &st);
+        MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD, &st);
         debug("Send Data", l_r->id);
         // debug_n(d_w->data, l_r->id, d_w->size);
-        MPI_Send((void *) ((char *) d_w->data + offset), to_write_size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD);
+        MPI_Send((void *) ((char *) d_w->data + offset), to_write_size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD);
         offset += to_write_size;
     }
 
@@ -414,10 +420,10 @@ void execute_dump(struct leader_resources *l_r) {
         struct block *b = c_a->parts[i];
         struct message *m = generate_message(l_r->id, b->id, b->id, b->node_address, b->size, OP_READ);
         debug("Send Read OP", l_r->id);
-        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, 3, MPI_COMM_WORLD);
+        MPI_Send(m, sizeof(struct message), MPI_BYTE, b->id, TAG_MSG, MPI_COMM_WORLD);
         void *buff = malloc(sizeof(char) * (b->size + 1));
         MPI_Status st;
-        MPI_Recv(buff, b->size, MPI_BYTE, b->id, 4, MPI_COMM_WORLD, &st);
+        MPI_Recv(buff, b->size, MPI_BYTE, b->id, TAG_DATA, MPI_COMM_WORLD, &st);
         memcpy((void *) (dump + (offset * sizeof(char))), buff, b->size);
         offset += b->size;
     }
@@ -432,9 +438,16 @@ void execute_dump_all(struct leader_resources *l_r) {
 }
 
 void execute_command(struct leader_resources *l_r) {
-    if (peek_user_command(l_r->leader_command_queue) != OP_NONE) {
+    while (l_r->leader_command_queue && peek_user_command(l_r->leader_command_queue) != OP_NONE) {
 
         switch (peek_user_command(l_r->leader_command_queue)) {
+            case OP_IS_ALIVE: {
+                debug("EXECUTE OP ALIVE", l_r->id);
+                struct message *m_alive = generate_message(l_r->id, 0, 0, 0, 0, OP_ALIVE);
+                MPI_Send(m_alive, sizeof(*m_alive), MPI_BYTE, 0, TAG_MSG, MPI_COMM_WORLD);
+                free(m_alive);
+                break;
+            }
             case OP_MALLOC:
                 debug("EXECUTE OP MALLOC LEADER", l_r->id);
                 execute_malloc(l_r);
@@ -498,10 +511,10 @@ void leader_loop(struct node *n, unsigned short terminal_id, unsigned short nb_n
         print_allocations_table(l_r);
         // Get command from user
         get_command(l_r, terminal_id);
-        // debug("COMMANDS LISTEN DONE", n->id);
+        debug("COMMANDS LISTEN DONE", n->id);
         // Execute Commands
         execute_command(l_r);
-        // debug("COMMANDS EXEC DONE", n->id);
+        debug("COMMANDS EXEC DONE", n->id);
         // Break on death
         if (die == 1)
             break;
