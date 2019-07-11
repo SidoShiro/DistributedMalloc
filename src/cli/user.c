@@ -81,6 +81,11 @@ void send_read(void *data, unsigned short leader) {
     struct message m2;
     MPI_Status st2;
     MPI_Recv(&m2, sizeof(struct message), MPI_BYTE, m->id_t, TAG_MSG, MPI_COMM_WORLD, &st2);
+    if (m2.size == 0 && d_r->size != 0) {
+        debug("Impossible to read, may have been an error", 0);
+        free(m);
+        return;
+    }
     debug("RECV OK with datasize read", 0);
     size_t real_data_size = m2.size;
     MPI_Status st3;
