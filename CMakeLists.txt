@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_C_COMPILER "mpicc")
-set(CMAKE_C_FLAGS "-O3 -std=c11 -Werror -Wall -Wextra -pedantic -fsanitize=address")
+set(CMAKE_C_FLAGS "-O3 -std=c11 -Werror -Wall -Wextra -pedantic") #  -fsanitize=address")
 
 project(DistributedMalloc)
 
@@ -30,7 +30,7 @@ set(MAIN src/main/main.c)
 
 set(TEST_MAIN test/main_test.c)
 
-set(FAILURE_DEMO src/demo/main_election_with_failures.c)
+set(FAILURE_DEMO demo/main_election_with_failures.c)
 
 
 include_directories("include/")

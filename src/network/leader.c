@@ -299,6 +299,9 @@ void execute_read(struct leader_resources *l_r) {
     struct allocation *c_a = give_for_v_address(l_r, d_r->address, &part_s);
     if (c_a == NULL) {
         debug("Seg Fault: requested read to a not allocated address", l_r->id);
+        // Response negative to user
+        struct message *mU = generate_message(l_r->id, DEF_NODE_USER, DEF_NODE_USER, 0, 0, OP_OK);
+        MPI_Send(mU, sizeof(struct message), MPI_BYTE, mU->id_t, TAG_MSG, MPI_COMM_WORLD);
         return;
     }
 

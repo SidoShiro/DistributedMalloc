@@ -65,17 +65,6 @@ char **split_cmd(char *cmd) {
     return tokens;
 }
 
-void print_args(char **args) {
-    char *tok;
-    ssize_t i = 0;
-    do {
-        tok = args[i];
-        i++;
-        if (tok != NULL)
-            printf("%s\n", tok);
-    } while (tok != NULL);
-}
-
 void error_msg(char *msg) {
     warnx("%s\n", msg);
 }
@@ -196,6 +185,9 @@ void execute(char **args, unsigned short leader) {
                 struct data_write *d_w = generate_data_write(address, datasize, buffer_write_file);
                 send_command(OP_WRITE, d_w, leader);
                 // OLD error_msg("w requires an argument 'datasize' which can be casted as a positive integer");
+                fclose(file_write);
+                free(d_w->data);
+                free(d_w);
             }
         } else {
             error_msg("w requires an argument 'address' which can be casted as a positive integer");
@@ -253,6 +245,9 @@ void execute(char **args, unsigned short leader) {
                 if (r_c != d_w->size)
                     error_msg("WARNING: file bytes write different from bytes asked");
                 // OLD error_msg("r requires an argument 'datasize' which can be casted as a positive integer");
+                free(d_w->data);
+                free(d_w);
+                fclose(file_read);
             }
         } else {
             error_msg("r require an argument 'address' which can be casted as a positive integer");
@@ -314,6 +309,7 @@ void execute(char **args, unsigned short leader) {
             struct data_id *d_i = generate_data_id(id);
             printf("Execute Kill on %zu \n", id);
             send_command(OP_KILL, d_i, leader);
+            free(d_i);
         } else {
             error_msg("k require an argument 'node_id' which can be casted as a positive integer");
         }
@@ -333,6 +329,7 @@ void execute(char **args, unsigned short leader) {
             struct data_id *d_i = generate_data_id(id);
             printf("Execute Revive on %zu \n", id);
             send_command(OP_REVIVE, d_i, leader);
+            free(d_i);
         } else {
             error_msg("revive require an argument 'node_id' which can be casted as a positive integer");
         }
