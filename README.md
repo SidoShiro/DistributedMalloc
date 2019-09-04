@@ -96,7 +96,7 @@ dmalloc commands:
     * id (the machine containing this address)
     
 
-## Node Life Cycles
+## Node Life Cycles (OUTDATED)!
 
 ### Node Leader Elections
 
