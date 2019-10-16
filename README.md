@@ -46,6 +46,7 @@ default is 20.
 dmalloc commands:
 
 | **Command**                   | **Desc.**                                               |
+|-------------------------------|---------------------------------------------------------|
 | h                             | display all available commands with their description   |
 | t                             | show table of allocations                               |
 | m `size`                      | return `address` to cmd user of the required allocation |
